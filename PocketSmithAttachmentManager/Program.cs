@@ -1,12 +1,16 @@
 ﻿using System;
+using System.Threading.Tasks;
+using PocketSmithAttachmentManager.Menus;
 
 namespace PocketSmithAttachmentManager
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            Console.Title = "PocketSmith Attachment Manager v1.0";
+
+            await MainMenu.Show();
         }
     }
 }
