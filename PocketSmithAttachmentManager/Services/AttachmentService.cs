@@ -16,6 +16,7 @@ namespace PocketSmithAttachmentManager.Services
     {
         private readonly HttpClient _httpClient;
         private readonly Type _parentMenuType;
+        private readonly RestClient _restClient;
 
         public AttachmentService(Type parentMenuType)
         {
@@ -27,6 +28,7 @@ namespace PocketSmithAttachmentManager.Services
                 .DefaultRequestHeaders
                 .Add("Accept", "application/json");
 
+            _restClient = new RestClient(PocketSmithUri.UNASSIGNED_ATTACHMENTS);
             _parentMenuType = parentMenuType;
         }
 
@@ -68,6 +70,17 @@ namespace PocketSmithAttachmentManager.Services
             Console.WriteLine("Returning to menu...");
 
             await (Task)_parentMenuType.GetMethod("Show").Invoke(null, null);
+        }
+
+        public async Task<List<AttachmentModel>> GetUnAssignedAttachments()
+        {
+            var uri = PocketSmithUri.UNASSIGNED_ATTACHMENTS;
+            uri = uri.Replace("{userId}", ConfigurationManager.AppSettings["userId"]);
+
+            var httpResponse = await _restClient.Get(uri);
+            var attachments = JsonSerializer.Deserialize<List<AttachmentModel>>(httpResponse);
+
+            return indexAttachments(attachments);
         }
 
         private async Task assignAttachment(long transactionId, long attachmentId)
@@ -138,6 +151,18 @@ namespace PocketSmithAttachmentManager.Services
                     await deleteLocalAttachment(filePath, true);
                 }
             }
+        }
+
+        private List<AttachmentModel> indexAttachments(List<AttachmentModel> attachments)
+        {
+            int attachmentCount = 1;
+            foreach (var attachment in attachments)
+            {
+                attachment.Index = attachmentCount;
+                attachmentCount++;
+            }
+
+            return attachments;
         }
     }
 }
