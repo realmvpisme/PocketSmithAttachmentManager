@@ -25,6 +25,7 @@ namespace PocketSmithAttachmentManager.Models
         public DateTime CreatedAt { get; set; }
         [JsonPropertyName("updated_at")]
         public DateTime UpdatedAt { get; set; }
+        public int Index { get; set; }
     }
 
     public class ContentTypeMetaModel

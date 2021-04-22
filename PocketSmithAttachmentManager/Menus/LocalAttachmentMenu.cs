@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using PocketSmithAttachmentManager.Services.Extensions;
@@ -85,8 +84,6 @@ namespace PocketSmithAttachmentManager.Menus
                 await LocalAttachmentMenu.Show();
             }
 
-            //_attachmentService.UploadAttachment(attachmentFilePath, 1);
-
             var transactionMenuText = @"
 Select Transaction Search Criteria:
 
@@ -95,7 +92,7 @@ Select Transaction Search Criteria:
     3. Date Range
     4. Return to Previous Menu
 ";
-
+            Console.Clear();
             Console.WriteLine(transactionMenuText);
 
             int selectedOption = 0;
@@ -128,6 +125,13 @@ Select Transaction Search Criteria:
                     break;
                 }
 
+                case 3:
+                {
+                    var selectedTransaction = await getTransactionByDate();
+                    await _attachmentService.UploadAttachment(attachmentFilePath, selectedTransaction.Id);
+                    break;
+                }
+
                 case 4:
                 {
                     await LocalAttachmentMenu.Show();
@@ -141,11 +145,18 @@ Select Transaction Search Criteria:
             decimal transactionAmount = 0.00m;
             do
             {
-                Console.WriteLine("Please enter the transaction amount and press ENTER:");
+                Console.Clear();
+                Console.WriteLine("Please enter the transaction amount or [C]ancel and press ENTER:");
 
                 try
                 {
-                    transactionAmount = decimal.Parse(Console.ReadLine());
+                    var selectedOption = Console.ReadLine();
+                    if (selectedOption.ToLower() == "c")
+                    {
+                        await LocalAttachmentMenu.Show();
+                    }
+
+                    transactionAmount = decimal.Parse(selectedOption);
                 }
                 catch (Exception)
                 {
@@ -163,13 +174,74 @@ Select Transaction Search Criteria:
             string transactionPayee = null;
             do
             {
-                Console.WriteLine("Please enter the payee name ane press ENTER:");
+                Console.Clear();
+                Console.WriteLine("Please enter the payee name or [C]ancel and press ENTER:");
                 transactionPayee = Console.ReadLine();
+
+                if (transactionPayee.ToLower() == "c")
+                {
+                    await LocalAttachmentMenu.Show();
+                }
             } while (string.IsNullOrEmpty(transactionPayee));
 
             var transactions = await _transactionService.GetTransactionsByPayee(transactionPayee);
 
             return await selectTransaction(transactions);
+        }
+
+        private static async Task<TransactionModel> getTransactionByDate()
+        {
+            DateTime? startDate = null;
+            DateTime? endDate = null;
+
+            do
+            {
+                Console.Clear();
+                Console.WriteLine("Please enter a start date or [C]ancel and press ENTER:");
+
+                try
+                {
+                    var selectedOption = Console.ReadLine();
+                    if (selectedOption.ToLower() == "c")
+                    {
+                        await LocalAttachmentMenu.Show();
+                    }
+
+                    startDate = DateTime.Parse(selectedOption);
+                }
+                catch (Exception)
+                {
+                    startDate = null;
+                }
+            } while (startDate == null);
+
+            do
+            {
+                try
+                {
+                    Console.Clear();
+                    Console.WriteLine("Please enter an end date or [C]ancel and press ENTER:");
+                  
+
+                    var selectedOption = Console.ReadLine();
+                    if (selectedOption.ToLower() == "c")
+                    {
+                        await LocalAttachmentMenu.Show();
+                    }
+
+                    endDate = string.IsNullOrEmpty(selectedOption) ? startDate : DateTime.Parse(selectedOption);
+                }
+                catch (Exception )
+                {
+                    endDate = null;
+                }
+
+            } while (endDate == null);
+
+            var transactions = await _transactionService.GetTransactionsByDate(Convert.ToDateTime(startDate), endDate);
+
+            return await selectTransaction(transactions);
+
         }
 
         private static async Task<TransactionModel> selectTransaction(List<TransactionModel> transactions)
