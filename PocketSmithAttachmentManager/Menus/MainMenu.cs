@@ -45,13 +45,13 @@ namespace PocketSmithAttachmentManager.Menus
 
                 case 2:
                     {
-                        AttachmentInboxMenu.Show();
+                        await AttachmentInboxMenu.Show();
                         break;
                     }
 
                 case 3:
                     {
-                        TransactionAttachmentMenu.Show();
+                        await TransactionMenu.Show();
                         break;
                     }
 
