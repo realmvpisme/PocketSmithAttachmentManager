@@ -3,8 +3,10 @@ using PocketSmithAttachmentManager.Models;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
 using System.Dynamic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -61,7 +63,7 @@ namespace PocketSmithAttachmentManager.Services
 
             var responseAttachment = JsonSerializer.Deserialize<AttachmentModel>(await httpResponse.Content.ReadAsStringAsync());
 
-            await assignAttachment(transactionId, responseAttachment.Id);
+            await AssignAttachmentToTransaction(transactionId, responseAttachment.Id);
 
             Console.WriteLine("Attachment upload succeeded!");
 
@@ -83,7 +85,8 @@ namespace PocketSmithAttachmentManager.Services
             return indexAttachments(attachments);
         }
 
-        private async Task assignAttachment(long transactionId, long attachmentId)
+
+        public async Task AssignAttachmentToTransaction(long transactionId, long attachmentId)
         {
             var uri = PocketSmithUri.ATTACHMENTS_BY_TRANSACTION;
             uri = uri.Replace("{transactionId}", transactionId.ToString());
@@ -102,6 +105,28 @@ namespace PocketSmithAttachmentManager.Services
 
                 await (Task)_parentMenuType.GetMethod("Show").Invoke(null, null);
             }
+        }
+
+        public async Task ViewAttachment(AttachmentModel attachment)
+        {
+            Console.WriteLine("Downloading attachment...");
+
+            var httpResponse = await _httpClient.GetAsync(attachment.OriginalUrl);
+
+            await using var memoryStream = await httpResponse.Content.ReadAsStreamAsync();
+            var path = Path.GetTempPath();
+            string filePath = $"{path}{attachment.FileName}";
+            await using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.ReadWrite);
+            await memoryStream.CopyToAsync(fileStream);
+            Process fileOpener = new Process();
+           fileOpener.StartInfo.FileName = "explorer";
+           fileOpener.StartInfo.Arguments = "\"" + filePath + "\"";
+           fileOpener.Start();
+
+           fileStream.Close();
+           memoryStream.Close();
+           await memoryStream.DisposeAsync();
+           await fileStream.DisposeAsync();
         }
 
         private async Task deleteLocalAttachment(string filePath, bool isRetry = false)
