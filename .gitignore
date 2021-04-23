@@ -4,3 +4,4 @@ obj/
 .git/
 *.csproj.user
 debug/
+App.config
