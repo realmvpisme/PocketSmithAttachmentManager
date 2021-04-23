@@ -46,10 +46,9 @@ namespace PocketSmithAttachmentManager.Services
             catch (Exception)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("No additional pages were found");
+                Console.WriteLine("No additional pages were found \n");
+                Console.ForegroundColor = ConsoleColor.White;
             }
-            
-
 
             return await httpResponse.Content.ReadAsStringAsync();
         }

@@ -1,12 +1,8 @@
-﻿using PocketSmithAttachmentManager.Models;
-using PocketSmithAttachmentManager.Services;
+﻿using PocketSmithAttachmentManager.Services;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using PocketSmithAttachmentManager.Services.Extensions;
 
 namespace PocketSmithAttachmentManager.Menus
 {
@@ -113,21 +109,21 @@ Select Transaction Search Criteria:
             {
                 case 1:
                     {
-                        var selectedTransaction = await getTransactionByAmount();
+                        var selectedTransaction = await TransactionMenu.GetTransactionByAmount();
                         await _attachmentService.UploadAttachment(attachmentFilePath, selectedTransaction.Id);
                         break;
                     }
 
                 case 2:
                 {
-                    var selectedTransaction = await getTransactionByPayee();
+                    var selectedTransaction = await TransactionMenu.GetTransactionByPayee();
                     await _attachmentService.UploadAttachment(attachmentFilePath, selectedTransaction.Id);
                     break;
                 }
 
                 case 3:
                 {
-                    var selectedTransaction = await getTransactionByDate();
+                    var selectedTransaction = await TransactionMenu.GetTransactionByDate();
                     await _attachmentService.UploadAttachment(attachmentFilePath, selectedTransaction.Id);
                     break;
                 }
@@ -140,139 +136,10 @@ Select Transaction Search Criteria:
             }
         }
 
-        private static async Task<TransactionModel> getTransactionByAmount()
-        {
-            decimal transactionAmount = 0.00m;
-            do
-            {
-                Console.Clear();
-                Console.WriteLine("Please enter the transaction amount or [C]ancel and press ENTER:");
+        
 
-                try
-                {
-                    var selectedOption = Console.ReadLine();
-                    if (selectedOption.ToLower() == "c")
-                    {
-                        await LocalAttachmentMenu.Show();
-                    }
 
-                    transactionAmount = decimal.Parse(selectedOption);
-                }
-                catch (Exception)
-                {
-                    transactionAmount = 0.00m;
-                }
-            } while (transactionAmount <= 0.00m);
 
-            var transactions = await _transactionService.GetTransactionsByAmount(transactionAmount);
-
-            return await selectTransaction(transactions);
-        }
-
-        private static async Task<TransactionModel> getTransactionByPayee()
-        {
-            string transactionPayee = null;
-            do
-            {
-                Console.Clear();
-                Console.WriteLine("Please enter the payee name or [C]ancel and press ENTER:");
-                transactionPayee = Console.ReadLine();
-
-                if (transactionPayee.ToLower() == "c")
-                {
-                    await LocalAttachmentMenu.Show();
-                }
-            } while (string.IsNullOrEmpty(transactionPayee));
-
-            var transactions = await _transactionService.GetTransactionsByPayee(transactionPayee);
-
-            return await selectTransaction(transactions);
-        }
-
-        private static async Task<TransactionModel> getTransactionByDate()
-        {
-            DateTime? startDate = null;
-            DateTime? endDate = null;
-
-            do
-            {
-                Console.Clear();
-                Console.WriteLine("Please enter a start date or [C]ancel and press ENTER:");
-
-                try
-                {
-                    var selectedOption = Console.ReadLine();
-                    if (selectedOption.ToLower() == "c")
-                    {
-                        await LocalAttachmentMenu.Show();
-                    }
-
-                    startDate = DateTime.Parse(selectedOption);
-                }
-                catch (Exception)
-                {
-                    startDate = null;
-                }
-            } while (startDate == null);
-
-            do
-            {
-                try
-                {
-                    Console.Clear();
-                    Console.WriteLine("Please enter an end date or [C]ancel and press ENTER:");
-                  
-
-                    var selectedOption = Console.ReadLine();
-                    if (selectedOption.ToLower() == "c")
-                    {
-                        await LocalAttachmentMenu.Show();
-                    }
-
-                    endDate = string.IsNullOrEmpty(selectedOption) ? startDate : DateTime.Parse(selectedOption);
-                }
-                catch (Exception )
-                {
-                    endDate = null;
-                }
-
-            } while (endDate == null);
-
-            var transactions = await _transactionService.GetTransactionsByDate(Convert.ToDateTime(startDate), endDate);
-
-            return await selectTransaction(transactions);
-
-        }
-
-        private static async Task<TransactionModel> selectTransaction(List<TransactionModel> transactions)
-        {
-            Console.Clear();
-            Console.WriteLine(transactions.ToStringTable(new[]{"Index", "Amount", "Date", "Payee", "Type"}, t => t.Index, t => t.Amount, t => t.Date, t => Regex.Match(t.Payee, ".{0,25}").Value, t => t.Type));
-           
-
-            int selectedTransaction = 0;
-            do
-            {
-                Console.WriteLine("Please enter a transaction number or [C]ancel and press ENTER:");
-
-                try
-                {
-                    var consoleSelection = Console.ReadLine();
-
-                    if (consoleSelection.ToLower() == "c")
-                    {
-                        await LocalAttachmentMenu.Show();
-                    }
-
-                    selectedTransaction = Convert.ToInt32(consoleSelection);
-                }
-                catch (Exception)
-                {
-                    selectedTransaction = 0;
-                }
-            } while (!Enumerable.Range(1, transactions.Max(x => x.Index)).Contains(selectedTransaction));
-
-            return transactions.FirstOrDefault(x => x.Index == selectedTransaction);
-        }
+       
     }
 }
