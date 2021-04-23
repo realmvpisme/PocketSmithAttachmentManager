@@ -101,6 +101,7 @@ namespace PocketSmithAttachmentManager.Services
             return indexTransactions(transactions);
         }
 
+
         private List<TransactionModel> indexTransactions(List<TransactionModel> transactions)
         {
             int transactionCount = 1;
