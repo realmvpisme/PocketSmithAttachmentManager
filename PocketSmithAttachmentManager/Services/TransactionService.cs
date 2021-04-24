@@ -81,7 +81,7 @@ namespace PocketSmithAttachmentManager.Services
                 .Replace("{searchTerm}", payee);
 
             var httpResponse = await _httpClient.GetStringAsync(uri);
-            var transactions = JsonSerializer.Deserialize<List<TransactionModel>>(httpResponse);
+            var transactions = JsonSerializer.Deserialize<List<TransactionModel>>(httpResponse, _serializerOptions);
 
             return indexTransactions(transactions);
         }
@@ -96,7 +96,7 @@ namespace PocketSmithAttachmentManager.Services
                 .Replace("{endDate}", endDate.Value.Date.ToString("yyyy-MM-dd"));
 
             var httpResponse = await _httpClient.GetStringAsync(uri);
-            var transactions = JsonSerializer.Deserialize<List<TransactionModel>>(httpResponse);
+            var transactions = JsonSerializer.Deserialize<List<TransactionModel>>(httpResponse, _serializerOptions);
 
             return indexTransactions(transactions);
         }
