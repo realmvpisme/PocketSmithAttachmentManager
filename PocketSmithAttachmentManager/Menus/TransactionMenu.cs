@@ -13,10 +13,12 @@ namespace PocketSmithAttachmentManager.Menus
     public static class TransactionMenu
     {
         private static readonly TransactionService _transactionService;
+        private static readonly AttachmentService _attachmentService;
 
         static TransactionMenu()
         {
             _transactionService = new TransactionService();
+            _attachmentService = new AttachmentService(typeof(TransactionMenu));
         }
 
         public static string MenuText { get; } = @"
@@ -94,6 +96,11 @@ namespace PocketSmithAttachmentManager.Menus
 
             var transactions = await _transactionService.GetTransactionsByAmount(transactionAmount);
 
+            foreach (var transaction in transactions)
+            {
+                transaction.Attachments = await _attachmentService.GetByTransactionId(transaction.Id);
+            }
+
             return await selectTransaction(transactions);
         }
 
@@ -148,6 +155,11 @@ namespace PocketSmithAttachmentManager.Menus
 
             var transactions = await _transactionService.GetTransactionsByDate(Convert.ToDateTime(startDate), endDate);
 
+            foreach (var transaction in transactions)
+            {
+                transaction.Attachments = await _attachmentService.GetByTransactionId(transaction.Id);
+            }
+
             return await selectTransaction(transactions);
 
         }
@@ -168,6 +180,11 @@ namespace PocketSmithAttachmentManager.Menus
             } while (string.IsNullOrEmpty(transactionPayee));
 
             var transactions = await _transactionService.GetTransactionsByPayee(transactionPayee);
+   foreach (var transaction in transactions)
+            {
+                transaction.Attachments = await _attachmentService.GetByTransactionId(transaction.Id);
+            }
+         
 
             return await selectTransaction(transactions);
         }
@@ -177,7 +194,7 @@ namespace PocketSmithAttachmentManager.Menus
         private static async Task<TransactionModel> selectTransaction(List<TransactionModel> transactions)
         {
             Console.Clear();
-            Console.WriteLine(transactions.ToStringTable(new[] { "Index", "Amount", "Date", "Payee", "Type" }, t => t.Index, t => t.Amount, t => t.Date, t => Regex.Match(t.Payee, ".{0,25}").Value, t => t.Type));
+            Console.WriteLine(transactions.ToStringTable(new[] { "Index", "Amount", "Date", "Payee", "Type", "Account Name", "Attachments"}, t => t.Index, t => t.Amount, t => t.Date,t => Regex.Match(t.Payee, ".{0,25}").Value, t => t.Type, t => t.TransactionAccount.Name, t => t.Attachments.Count));
 
 
             int selectedTransaction = 0;
