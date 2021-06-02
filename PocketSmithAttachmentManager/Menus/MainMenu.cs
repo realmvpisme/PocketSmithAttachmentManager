@@ -11,8 +11,9 @@ namespace PocketSmithAttachmentManager.Menus
 
     1. Add Local Attachment
     2. Manage Attachment Inbox
-    3. Manage Transaction Attachments
-    4. Exit
+    3. Manage Transactions
+    4. Download Data
+    5. Exit
 
 ";
 
@@ -56,6 +57,12 @@ namespace PocketSmithAttachmentManager.Menus
                     }
 
                 case 4:
+                    {
+                        await DownloadDataMenu.Show();
+                        break;
+                    }
+
+                case 5:
                     {
                         Environment.Exit(0);
                         break;
