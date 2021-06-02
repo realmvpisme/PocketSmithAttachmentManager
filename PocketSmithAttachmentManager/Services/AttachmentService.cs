@@ -129,6 +129,17 @@ namespace PocketSmithAttachmentManager.Services
            await fileStream.DisposeAsync();
         }
 
+        public async Task<List<AttachmentModel>> GetByTransactionId(long transactionId)
+        {
+            var uri = PocketSmithUri.ATTACHMENTS_BY_TRANSACTION;
+            uri = uri.Replace("{transactionId}", transactionId.ToString());
+
+            var httpResponse = await _httpClient.GetStringAsync(uri);
+            var attachments = JsonSerializer.Deserialize<List<AttachmentModel>>(httpResponse);
+
+            return attachments;
+        }
+
         private async Task deleteLocalAttachment(string filePath, bool isRetry = false)
         {
             if (!isRetry)

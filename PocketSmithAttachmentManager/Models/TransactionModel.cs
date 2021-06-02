@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
+using PocketSmithAttachmentManager.Services;
 
 namespace PocketSmithAttachmentManager.Models
 {
@@ -47,5 +49,7 @@ namespace PocketSmithAttachmentManager.Models
 
         [JsonIgnore]
         public int Index { get; set; }
+        [JsonIgnore]
+        public List<AttachmentModel> Attachments { get; set; }
     }
 }
