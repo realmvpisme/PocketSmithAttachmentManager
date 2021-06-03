@@ -31,6 +31,30 @@ namespace PocketSmithAttachmentManager.Menus
                     selectedOption = 0;
                 }
             } while (!Enumerable.Range(1, 3).Contains(selectedOption));
+
+            switch (selectedOption)
+            {
+                case 1:
+                {
+                    await downloadAllData();
+                    break;
+                }
+
+                case 2:
+                {
+                    break;
+                }
+
+                case 3:
+                {
+                    break;
+                }
+            }
+        }
+
+        private static async Task downloadAllData()
+        {
+
         }
     }
 }
