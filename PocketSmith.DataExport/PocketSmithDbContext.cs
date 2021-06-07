@@ -1,10 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Microsoft.Extensions.Options;
 using PocketSmith.DataExport.Models;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace PocketSmith.DataExport
 {
@@ -36,8 +32,32 @@ namespace PocketSmith.DataExport
             modelBuilder.Entity<DB_Transaction>().ToTable("Transactions");
             modelBuilder.Entity<DB_Variant>().ToTable("Variants");
 
+
+            modelBuilder.Entity<DB_Account>()
+                .Property(x => x.Id)
+                .ValueGeneratedNever();
+
+            modelBuilder.Entity<DB_Attachment>()
+                .Property(x => x.Id)
+                .ValueGeneratedNever();
+
+            modelBuilder.Entity<DB_Category>()
+                .Property(x => x.Id)
+                .ValueGeneratedNever();
+
+            modelBuilder.Entity<DB_Institution>()
+                .Property(x => x.Id)
+                .ValueGeneratedNever();
+
+            modelBuilder.Entity<DB_Transaction>()
+                .Property(x => x.Id)
+                .ValueGeneratedNever();
+
+
+
             modelBuilder.Entity<DB_Transaction>().Property(t => t.Labels)
-                .HasConversion(l => JsonSerializer.Serialize(l));
+                .HasConversion(l => JsonSerializer.Serialize(l, default), 
+                    l => JsonSerializer.Deserialize<string []>(l, default));
         }
 
     }
