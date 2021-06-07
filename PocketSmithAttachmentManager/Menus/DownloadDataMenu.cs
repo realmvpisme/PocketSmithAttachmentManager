@@ -1,11 +1,19 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using PocketSmithAttachmentManager.Services;
 
 namespace PocketSmithAttachmentManager.Menus
 {
     public static class DownloadDataMenu
     {
+        private static readonly DataDownloadService _dataDownloadService;
+
+        static DownloadDataMenu()
+        {
+            _dataDownloadService = new DataDownloadService(typeof(DownloadDataMenu));
+        }
         public static string MenuText = @"
         *****Download Data*****
 
@@ -54,7 +62,27 @@ namespace PocketSmithAttachmentManager.Menus
 
         private static async Task downloadAllData()
         {
+            string databaseFilePath = null;
+            do
+            {
+                Console.Clear();
+                Console.WriteLine("Please enter the file path for an existing or new SQLite database or [C] to cancel and press ENTER:");
+                var filePath = Console.ReadLine().TrimStart((@"""\\").ToCharArray()).TrimEnd((@"\\""").ToCharArray());
+                if (Directory.Exists(Path.GetDirectoryName(filePath)) || filePath.ToLower() == "c")
+                {
+                    databaseFilePath = filePath;
+                }
+            } while (string.IsNullOrEmpty(databaseFilePath));
+
+            if (databaseFilePath.ToLower() == "c")
+            {
+                await Show();
+            }
+
+            _dataDownloadService.LoadDatabase(databaseFilePath);
+
 
         }
+
     }
 }
