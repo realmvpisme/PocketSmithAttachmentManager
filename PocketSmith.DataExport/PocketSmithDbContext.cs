@@ -1,14 +1,21 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.Extensions.Options;
 using PocketSmith.DataExport.Models;
 
 namespace PocketSmith.DataExport
 {
     public class PocketSmithDbContext : DbContext
     {
-        public PocketSmithDbContext(DbContextOptions options) : base(options)
+        public PocketSmithDbContext() : base()
         {
 
+        }
+        public PocketSmithDbContext(DbContextOptions options) : base(options)
+        {
         }
 
         public DbSet<DB_Account> Accounts { get; set; }
@@ -28,6 +35,10 @@ namespace PocketSmith.DataExport
             modelBuilder.Entity<DB_Institution>().ToTable("Institutions");
             modelBuilder.Entity<DB_Transaction>().ToTable("Transactions");
             modelBuilder.Entity<DB_Variant>().ToTable("Variants");
+
+            modelBuilder.Entity<DB_Transaction>().Property(t => t.Labels)
+                .HasConversion(l => JsonSerializer.Serialize(l));
         }
+
     }
 }
