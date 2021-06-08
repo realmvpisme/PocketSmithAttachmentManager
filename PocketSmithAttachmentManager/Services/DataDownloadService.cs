@@ -12,8 +12,9 @@ namespace PocketSmithAttachmentManager.Services
     {
         private readonly HttpClient _httpClient;
         private readonly Type _parentType;
-        private PocketSmithDbContext _context;
         private TransactionService _transactionService;
+        private ContextFactory _contextFactory;
+        private string _databaseFilePath;
 
         public DataDownloadService(Type parentType)
         {
@@ -28,25 +29,24 @@ namespace PocketSmithAttachmentManager.Services
             _parentType = parentType;
 
             _transactionService = new TransactionService();
+
+            _contextFactory = new ContextFactory();
         }
 
         public async Task DownloadAllData()
         {
-            if (_context == null)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("A database file must be loaded before downloading data.");
-                Console.ForegroundColor = ConsoleColor.White;
-            }
+            var context = _contextFactory.Create(_databaseFilePath);
 
             Console.WriteLine("Downloading transactions...");
+
+            var transactions = await _transactionService.GetAllTransactions();
         }
 
         public async Task<bool> LoadDatabase(string filePath)
         {
-            var contextOptionsBuilder = new DbContextOptionsBuilder();
-            contextOptionsBuilder.UseSqlite($"Data Source={filePath}");
-            await using var _context = new PocketSmithDbContext(contextOptionsBuilder.Options);
+            _databaseFilePath = filePath;
+
+            await using var context = _contextFactory.Create(filePath);
 
             bool fileExists = File.Exists(filePath);
 
@@ -62,7 +62,7 @@ namespace PocketSmithAttachmentManager.Services
 
             try
             {
-                await _context.Database.MigrateAsync();
+                await context.Database.MigrateAsync();
             }
             catch (Exception e)
             {
@@ -77,11 +77,6 @@ namespace PocketSmithAttachmentManager.Services
             Console.ForegroundColor = ConsoleColor.White;
 
             return true;
-        }
-
-        private async Task downloadTransactions()
-        {
-
         }
 
     }

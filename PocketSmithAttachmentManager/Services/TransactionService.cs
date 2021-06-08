@@ -45,8 +45,14 @@ namespace PocketSmithAttachmentManager.Services
 
             transactions.ForEach(t => transactionList.Add(t));
 
+
             do
             {
+                if (!string.IsNullOrEmpty(_restClient.CurrentPageUri))
+                {
+                    _restClient.PreviousPageUri = _restClient.CurrentPageUri;
+                }
+
                 if (!string.IsNullOrEmpty(_restClient.NextPageUri))
                 {
                     _restClient.CurrentPageUri = _restClient.NextPageUri;

@@ -2,6 +2,7 @@
 using System.Configuration;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Permissions;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -12,10 +13,12 @@ namespace PocketSmithAttachmentManager.Services
         private readonly HttpClient _httpClient;
         private readonly string _baseUri;
         public string CurrentPageUri { get; set; }
-        public string FirstPageUri { get; set; }
+        public string FirstPageUri { get; private set; }
         public string PreviousPageUri { get; set; }
         public string NextPageUri { get; set; }
-        public string LastPageUri { get; set; }
+        public string LastPageUri { get; private set; }
+        public int TotalPages { get; private set; }
+        public int CurrentPageNumber { get; private set; }
 
         public RestClient(string baseUri)
         {
@@ -42,6 +45,13 @@ namespace PocketSmithAttachmentManager.Services
                 FirstPageUri = Regex.Match(links, "(?<=<)[^<]+(?=>;\\srel=\\\"first\\\")").Value;
                 NextPageUri = Regex.Match(links, "(?<=<)[^<]+(?=>;\\srel=\\\"next\\\")").Value;
                 LastPageUri = Regex.Match(links, "(?<=<)[^<]+(?=>;\\srel=\\\"last\\\")").Value;
+
+                if (TotalPages == 0)
+                {
+                    TotalPages = Convert.ToInt32(Regex.Match(LastPageUri, "(?<=\\?page=)\\d+").Value);
+                }
+
+                CurrentPageNumber = Convert.ToInt32(Regex.Match(CurrentPageUri, "(?<=\\?page=)\\d+").Value);
             }
             catch (Exception)
             {
