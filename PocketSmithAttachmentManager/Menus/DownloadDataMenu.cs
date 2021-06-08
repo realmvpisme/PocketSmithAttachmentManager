@@ -79,8 +79,9 @@ namespace PocketSmithAttachmentManager.Menus
                 await Show();
             }
 
-            _dataDownloadService.LoadDatabase(databaseFilePath);
+            await _dataDownloadService.LoadDatabase(databaseFilePath);
 
+            await _dataDownloadService.DownloadAllData();
 
         }
 

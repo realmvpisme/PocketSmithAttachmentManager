@@ -581,6 +581,19 @@
           }
         }
       },
+      "Spectre.Console/0.39.0": {
+        "type": "package",
+        "dependencies": {
+          "System.Memory": "4.5.0",
+          "Wcwidth": "0.2.0"
+        },
+        "compile": {
+          "lib/netstandard2.0/Spectre.Console.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard2.0/Spectre.Console.dll": {}
+        }
+      },
       "SQLitePCLRaw.bundle_e_sqlite3/2.0.2": {
         "type": "package",
         "dependencies": {
@@ -1767,6 +1780,15 @@
           "lib/netstandard1.3/System.Xml.XDocument.dll": {}
         }
       },
+      "Wcwidth/0.2.0": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/Wcwidth.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard2.0/Wcwidth.dll": {}
+        }
+      },
       "PocketSmith.DataExport/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v3.1",
@@ -2602,6 +2624,22 @@
         "runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
         "runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl.nuspec",
         "runtimes/ubuntu.16.10-x64/native/System.Security.Cryptography.Native.OpenSsl.so"
+      ]
+    },
+    "Spectre.Console/0.39.0": {
+      "sha512": "7GgJ/gJV2Xge7khTQ6LlaukwYPldSIkew+j3OOhBmExlgzS4f9wC1iXs3df0hbtbHYd2fB02NxOWZTFcnwsYlg==",
+      "type": "package",
+      "path": "spectre.console/0.39.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net5.0/Spectre.Console.dll",
+        "lib/net5.0/Spectre.Console.xml",
+        "lib/netstandard2.0/Spectre.Console.dll",
+        "lib/netstandard2.0/Spectre.Console.xml",
+        "small-logo.png",
+        "spectre.console.0.39.0.nupkg.sha512",
+        "spectre.console.nuspec"
       ]
     },
     "SQLitePCLRaw.bundle_e_sqlite3/2.0.2": {
@@ -6031,6 +6069,19 @@
         "system.xml.xdocument.nuspec"
       ]
     },
+    "Wcwidth/0.2.0": {
+      "sha512": "H7no2W0vuLJTvSPanlrijtG3UdJNVoeWBOp2a5dJFVa2tqSQuP5GfbJw1xAtPG9agRW310nFTUUsyPz5tuVIxw==",
+      "type": "package",
+      "path": "wcwidth/0.2.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/netstandard2.0/Wcwidth.dll",
+        "lib/netstandard2.0/Wcwidth.xml",
+        "wcwidth.0.2.0.nupkg.sha512",
+        "wcwidth.nuspec"
+      ]
+    },
     "PocketSmith.DataExport/1.0.0": {
       "type": "project",
       "path": "../PocketSmith.DataExport/PocketSmith.DataExport.csproj",
@@ -6041,6 +6092,7 @@
     ".NETCoreApp,Version=v3.1": [
       "Microsoft.EntityFrameworkCore.Design >= 3.1.15",
       "PocketSmith.DataExport >= 1.0.0",
+      "Spectre.Console >= 0.39.0",
       "System.Configuration.ConfigurationManager >= 5.0.0",
       "System.Net.Http >= 4.3.4"
     ]
@@ -6104,6 +6156,10 @@
             "suppressParent": "All",
             "target": "Package",
             "version": "[3.1.15, )"
+          },
+          "Spectre.Console": {
+            "target": "Package",
+            "version": "[0.39.0, )"
           },
           "System.Configuration.ConfigurationManager": {
             "target": "Package",
