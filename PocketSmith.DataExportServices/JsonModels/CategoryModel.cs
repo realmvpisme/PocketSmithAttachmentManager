@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace PocketSmithAttachmentManager.Models
+namespace PocketSmith.DataExportServices.JsonModels
 {
     public class CategoryModel
     {

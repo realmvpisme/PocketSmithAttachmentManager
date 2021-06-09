@@ -1,18 +1,17 @@
-﻿using PocketSmithAttachmentManager.Constants;
-using PocketSmithAttachmentManager.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.Dynamic;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using PocketSmith.DataExportServices.JsonModels;
+using PocketSmithAttachmentManager.Constants;
 
-namespace PocketSmithAttachmentManager.Services
+namespace PocketSmithAttachmentManager.WebServices
 {
     public class AttachmentService
     {

@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PocketSmithAttachmentManage
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PocketSmith.DataExport", "PocketSmith.DataExport\PocketSmith.DataExport.csproj", "{A8D36786-06AF-45A7-9E34-27590C2D72B9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PocketSmith.DataExportServices", "PocketSmith.DataExportServices\PocketSmith.DataExportServices.csproj", "{71C49F5F-1A97-46C0-A0CA-902705E29BC3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{A8D36786-06AF-45A7-9E34-27590C2D72B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A8D36786-06AF-45A7-9E34-27590C2D72B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A8D36786-06AF-45A7-9E34-27590C2D72B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71C49F5F-1A97-46C0-A0CA-902705E29BC3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71C49F5F-1A97-46C0-A0CA-902705E29BC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71C49F5F-1A97-46C0-A0CA-902705E29BC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71C49F5F-1A97-46C0-A0CA-902705E29BC3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

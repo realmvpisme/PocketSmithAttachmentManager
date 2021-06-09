@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using PocketSmithAttachmentManager.Services;
 
-namespace PocketSmithAttachmentManager.Models
+namespace PocketSmith.DataExportServices.JsonModels
 {
     public class TransactionModel
     {

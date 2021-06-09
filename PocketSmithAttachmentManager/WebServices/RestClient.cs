@@ -2,11 +2,10 @@
 using System.Configuration;
 using System.Linq;
 using System.Net.Http;
-using System.Security.Permissions;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace PocketSmithAttachmentManager.Services
+namespace PocketSmithAttachmentManager.WebServices
 {
     public class RestClient
     {
@@ -31,11 +30,11 @@ namespace PocketSmithAttachmentManager.Services
                 .Add("Accept", "application/json");
 
             _baseUri = baseUri;
-            CurrentPageUri = baseUri;
         }
 
         public async Task<string> Get(string uri)
         {
+            CurrentPageUri = uri;
             var httpResponse = await _httpClient.GetAsync(uri);
 
             try
@@ -51,9 +50,11 @@ namespace PocketSmithAttachmentManager.Services
                     TotalPages = Convert.ToInt32(Regex.Match(LastPageUri, "(?<=\\?page=)\\d+").Value);
                 }
 
-                CurrentPageNumber = Convert.ToInt32(Regex.Match(CurrentPageUri, "(?<=\\?page=)\\d+").Value);
+                var currentPageNumberString = Regex.Match(CurrentPageUri, "(?<=\\?page=)\\d+").Value;
+
+                CurrentPageNumber = !string.IsNullOrEmpty(currentPageNumberString) ? Convert.ToInt32(currentPageNumberString) : 1;
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("No additional pages were found \n");
