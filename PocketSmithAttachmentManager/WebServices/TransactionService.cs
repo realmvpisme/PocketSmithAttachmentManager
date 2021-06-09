@@ -1,14 +1,15 @@
 ﻿using System;
-using PocketSmithAttachmentManager.Constants;
-using PocketSmithAttachmentManager.Models;
-using PocketSmithAttachmentManager.Services.Extensions;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using PocketSmith.DataExportServices.JsonModels;
+using PocketSmithAttachmentManager.Constants;
+using PocketSmithAttachmentManager.WebServices.Extensions;
+using ShellProgressBar;
 
-namespace PocketSmithAttachmentManager.Services
+namespace PocketSmithAttachmentManager.WebServices
 {
     public class TransactionService
     {
@@ -45,6 +46,14 @@ namespace PocketSmithAttachmentManager.Services
 
             transactions.ForEach(t => transactionList.Add(t));
 
+            var progressBarOptions = new ProgressBarOptions()
+            {
+                ProgressCharacter = ('-'),
+                DisplayTimeInRealTime = false
+            };
+            using var progressBar = new ProgressBar(_restClient.TotalPages, "Downloading Transactions", ConsoleColor.White);
+
+            progressBar.Tick();
 
             do
             {
@@ -61,6 +70,8 @@ namespace PocketSmithAttachmentManager.Services
                 httpResponse = await _restClient.Get(_restClient.CurrentPageUri);
                 transactions = JsonSerializer.Deserialize<List<TransactionModel>>(httpResponse, _serializerOptions);
                 transactions.ForEach(t => transactionList.Add(t));
+
+                progressBar.Tick();
 
             } while (_restClient.CurrentPageUri != _restClient.LastPageUri);
 

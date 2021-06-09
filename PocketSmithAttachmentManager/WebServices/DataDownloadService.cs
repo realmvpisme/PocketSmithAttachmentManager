@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using PocketSmith.DataExport;
 
-namespace PocketSmithAttachmentManager.Services
+namespace PocketSmithAttachmentManager.WebServices
 {
     public class DataDownloadService
     {
@@ -37,9 +37,13 @@ namespace PocketSmithAttachmentManager.Services
         {
             var context = _contextFactory.Create(_databaseFilePath);
 
-            Console.WriteLine("Downloading transactions...");
+            Console.Clear();
 
             var transactions = await _transactionService.GetAllTransactions();
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("All transactions downloaded successfully!");
+            Console.ForegroundColor = ConsoleColor.White;
         }
 
         public async Task<bool> LoadDatabase(string filePath)

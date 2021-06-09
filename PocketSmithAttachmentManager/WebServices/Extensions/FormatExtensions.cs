@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
-namespace PocketSmithAttachmentManager.Services.Extensions
+namespace PocketSmithAttachmentManager.WebServices.Extensions
 {
     public static class FormatExtensions
     {

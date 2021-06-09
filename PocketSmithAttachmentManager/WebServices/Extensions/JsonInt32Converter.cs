@@ -2,7 +2,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace PocketSmithAttachmentManager.Services.Extensions
+namespace PocketSmithAttachmentManager.WebServices.Extensions
 {
     public class JsonInt32Converter : System.Text.Json.Serialization.JsonConverter<int>
     {

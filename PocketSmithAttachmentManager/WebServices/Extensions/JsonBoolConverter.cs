@@ -2,7 +2,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace PocketSmithAttachmentManager.Services.Extensions
+namespace PocketSmithAttachmentManager.WebServices.Extensions
 {
     public class JsonBoolConverter : JsonConverter<bool>
     {
