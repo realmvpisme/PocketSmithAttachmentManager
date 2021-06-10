@@ -5,6 +5,9 @@ namespace PocketSmith.DataExportServices.Transactions
 {
     public class TransactionDataService : DataServiceBase<TransactionModel, DB_Transaction>
     {
-        
+        public TransactionDataService(string databaseFilePath) : base(databaseFilePath)
+        {
+
+        }
     }
 }
