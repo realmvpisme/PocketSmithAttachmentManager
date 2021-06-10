@@ -1,11 +1,11 @@
-﻿using PocketSmithAttachmentManager.Models;
-using PocketSmithAttachmentManager.Services;
-using PocketSmithAttachmentManager.Services.Extensions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using PocketSmith.DataExportServices.JsonModels;
+using PocketSmithAttachmentManager.WebServices;
+using PocketSmithAttachmentManager.WebServices.Extensions;
 
 namespace PocketSmithAttachmentManager.Menus
 {
