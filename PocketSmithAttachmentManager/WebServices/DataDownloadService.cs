@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using PocketSmith.DataExport;
 using PocketSmith.DataExportServices.Accounts;
+using PocketSmith.DataExportServices.Categories;
+using PocketSmith.DataExportServices.Institutions;
 using PocketSmith.DataExportServices.JsonModels;
 using PocketSmith.DataExportServices.Transactions;
 using ShellProgressBar;
@@ -41,7 +43,6 @@ namespace PocketSmithAttachmentManager.WebServices
         {
             var context = _contextFactory.Create(_databaseFilePath);
             var transactionDataService = new TransactionDataService(_databaseFilePath);
-            var accountDataService = new AccountDataService(_databaseFilePath);
 
             Console.Clear();
             
@@ -59,6 +60,19 @@ namespace PocketSmithAttachmentManager.WebServices
             foreach (var transaction in transactions)
             {
                 progressBar.Tick();
+
+                //Add transaction account.
+                if (transaction.TransactionAccount != null)
+                {
+                    await processTransactionAccount(transaction.TransactionAccount);
+                }
+
+                //Add category.
+                if (transaction.Category != null)
+                {
+                    await processCategory(transaction.Category);
+                }
+
                 List<TransactionModel> existingTransactions = new List<TransactionModel>();
                 if (await transactionDataService.Exists(transaction.Id))
                 {
@@ -70,18 +84,7 @@ namespace PocketSmithAttachmentManager.WebServices
                     await transactionDataService.Create(transaction);
                 }
 
-                if (transaction.TransactionAccount != null)
-                {
-                    List<AccountModel> existingAccounts = new List<AccountModel>();
-                    if (await accountDataService.Exists(transaction.TransactionAccount.AccountId))
-                    {
-                        existingAccounts.Add(transaction.TransactionAccount);
-                    }
-                    else
-                    {
-                        await accountDataService.Create(transaction.TransactionAccount);
-                    }
-                }
+              
             }
 
             Console.ForegroundColor = ConsoleColor.Green;
@@ -98,14 +101,9 @@ namespace PocketSmithAttachmentManager.WebServices
             bool fileExists = File.Exists(filePath);
 
             Console.Clear();
-            if (fileExists)
-            {
-                Console.WriteLine("Loading database file...");
-            }
-            else
-            {
-                Console.WriteLine("Database file does not exist. Creating new database file...");
-            }
+            Console.WriteLine(fileExists
+                ? "Loading database file..."
+                : "Database file does not exist. Creating new database file...");
 
             try
             {
@@ -125,6 +123,74 @@ namespace PocketSmithAttachmentManager.WebServices
 
             return true;
         }
+
+        private async Task processTransactionAccount(AccountModel account)
+        {
+            var accountDataService = new AccountDataService(_databaseFilePath);
+
+            if (account.Institution != null)
+            {
+                await processInstitution(account.Institution);
+            }
+
+            List<AccountModel> existingAccounts = new List<AccountModel>();
+            if (await accountDataService.Exists(account.AccountId))
+            {
+                existingAccounts.Add(account);
+            }
+            else
+            {
+                await accountDataService.Create(account);
+            }
+        }
+
+        private async Task processCategory(CategoryModel category)
+        {
+            var categoryDataService = new CategoryDataService(_databaseFilePath);
+
+            List<CategoryModel> existingCategories = new List<CategoryModel>();
+
+            
+            if (await categoryDataService.Exists(category.Id))
+            {
+                existingCategories.Add(category);
+            }
+            else
+            {
+                await categoryDataService.Create(category);
+            }
+
+            //Process child categories.
+
+            foreach (var childCategory in category.Children)
+            {
+                if (await categoryDataService.Exists(childCategory.Id))
+                {
+                    existingCategories.Add(childCategory);
+                }
+                else
+                {
+                    await categoryDataService.Create(childCategory);
+                }
+            }
+        }
+
+        private async Task processInstitution(InstitutionModel institution)
+        {
+            var institutionDataService = new InstitutionDataService(_databaseFilePath);
+
+            List<InstitutionModel> existingInsitutions = new List<InstitutionModel>();
+
+            if (await institutionDataService.Exists(institution.Id))
+            {
+                existingInsitutions.Add(institution);
+            }
+            else
+            {
+                await institutionDataService.Create(institution);
+            }
+        }
+
 
     }
 }

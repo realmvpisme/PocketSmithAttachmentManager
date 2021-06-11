@@ -2,17 +2,13 @@
 using PocketSmith.DataExport.Models;
 using PocketSmith.DataExportServices.JsonModels;
 
-namespace PocketSmith.DataExportServices.Accounts.Mappers
+namespace PocketSmith.DataExportServices.Institutions.Mappers
 {
-    public class AccountMapperProfile : Profile
+    public class InstitutionMapperProfile : Profile
     {
-        public AccountMapperProfile()
+        public InstitutionMapperProfile()
         {
-            CreateMap<AccountModel, DB_Account>()
-                .ForMember(dest => dest.InstitutionId, map =>
-                {
-                    map.MapFrom(src => src.Institution.Id);
-                })
+            CreateMap<InstitutionModel, DB_Institution>()
                 .ForMember(dest => dest.CreatedTime, map =>
                 {
                     map.MapFrom(src => src.CreatedAt);

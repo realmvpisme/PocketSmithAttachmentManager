@@ -1,6 +1,8 @@
 ﻿using System.Reflection.Metadata.Ecma335;
 using AutoMapper;
 using PocketSmith.DataExportServices.Accounts.Mappers;
+using PocketSmith.DataExportServices.Categories.Mappers;
+using PocketSmith.DataExportServices.Institutions.Mappers;
 using PocketSmith.DataExportServices.Transactions.Mappers;
 
 namespace PocketSmith.DataExportServices
@@ -13,6 +15,8 @@ namespace PocketSmith.DataExportServices
             {
                cfg.AddProfile(new TransactionMapperProfile());
                cfg.AddProfile(new AccountMapperProfile());
+               cfg.AddProfile(new CategoryMapperProfile());
+               cfg.AddProfile(new InstitutionMapperProfile());
             });
         }
     }
