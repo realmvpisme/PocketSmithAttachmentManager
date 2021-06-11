@@ -32,6 +32,7 @@ namespace PocketSmith.DataExportServices
             await using var context = ContextFactory.Create(DatabaseFilePath);
             var dbEntity = Mapper.Map<TDatabaseModel>(createItem);
             var createResult = await context.AddAsync(dbEntity);
+            await context.SaveChangesAsync();
             return await GetById(createResult.Entity.Id);
         }
 
@@ -42,6 +43,7 @@ namespace PocketSmith.DataExportServices
             var dbEntity = await context.Set<TDatabaseModel>().FirstOrDefaultAsync(x => x.Id == id);
             dbEntity = Mapper.Map<TDatabaseModel>(updateItem);
             context.Update(dbEntity);
+            await context.SaveChangesAsync();
         }
 
         public virtual async Task Delete(long id)
@@ -50,13 +52,14 @@ namespace PocketSmith.DataExportServices
 
             var dbEntity = await context.Set<TDatabaseModel>().FirstOrDefaultAsync(x => x.Id == id);
             context.Remove(dbEntity);
+            await context.SaveChangesAsync();
         }
 
         public virtual async Task<TJsonModel> GetById(long id)
         {
             await using var context = ContextFactory.Create(DatabaseFilePath);
 
-            var dbEntity = context.Set<TDatabaseModel>().FirstOrDefaultAsync(x => x.Id == id);
+            var dbEntity = await context.Set<TDatabaseModel>().FirstOrDefaultAsync(x => x.Id == id);
             var mappedEntity = Mapper.Map<TJsonModel>(dbEntity);
             return mappedEntity;
         }

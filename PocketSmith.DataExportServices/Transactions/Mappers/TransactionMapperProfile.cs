@@ -8,7 +8,24 @@ namespace PocketSmith.DataExportServices.Transactions.Mappers
     {
         public TransactionMapperProfile()
         {
-            CreateMap<TransactionModel, DB_Transaction>().ReverseMap();
+            CreateMap<TransactionModel, DB_Transaction>()
+                .ForMember(dest => dest.AccountId, x =>
+            {
+                x.MapFrom(src => src.TransactionAccount.Id);
+            })
+                .ForMember(dest => dest.CategoryId, x =>
+                {
+                    x.MapFrom(
+                        src => src.Category.Id);
+                })
+                .ForMember(dest => dest.CreatedTime, map =>
+                {
+                    map.MapFrom(src => src.CreatedAt);
+                })
+                .ForMember(dest => dest.LastUpdated, map =>
+                {
+                    map.MapFrom(src => src.UpdatedAt);
+                }).ReverseMap();
         }
     }
 }
