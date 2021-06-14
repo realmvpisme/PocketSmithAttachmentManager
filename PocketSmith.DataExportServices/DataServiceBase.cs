@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -53,6 +54,16 @@ namespace PocketSmith.DataExportServices
             var dbEntity = await context.Set<TDatabaseModel>().FirstOrDefaultAsync(x => x.Id == id);
             context.Remove(dbEntity);
             await context.SaveChangesAsync();
+        }
+
+        public virtual async Task<IEnumerable<TJsonModel>> GetAll()
+        {
+            await using var context = ContextFactory.Create(DatabaseFilePath);
+
+            var dbEntities = await context.Set<TDatabaseModel>().ToListAsync();
+            var mappedEntities = Mapper.Map<IEnumerable<TJsonModel>>(dbEntities);
+
+            return mappedEntities;
         }
 
         public virtual async Task<TJsonModel> GetById(long id)
