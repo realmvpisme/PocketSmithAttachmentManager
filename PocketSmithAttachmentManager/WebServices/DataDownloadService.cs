@@ -2,10 +2,14 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using PocketSmith.DataExport;
+using PocketSmith.DataExport.Models;
+using PocketSmith.DataExportServices;
 using PocketSmith.DataExportServices.Accounts;
 using PocketSmith.DataExportServices.Categories;
 using PocketSmith.DataExportServices.Institutions;
@@ -22,6 +26,9 @@ namespace PocketSmithAttachmentManager.WebServices
         private readonly TransactionService _transactionService;
         private readonly ContextFactory _contextFactory;
         private string _databaseFilePath;
+        private readonly TransactionDataService _transactionDataService;
+        private readonly Mapper _mapper;
+
 
         public DataDownloadService(Type parentType)
         {
@@ -37,6 +44,8 @@ namespace PocketSmithAttachmentManager.WebServices
 
             _transactionService = new TransactionService();
             _contextFactory = new ContextFactory();
+            _transactionDataService = new TransactionDataService(_databaseFilePath);
+            _mapper = new Mapper(MapperConfigurationGenerator.Invoke());
         }
 
         public async Task DownloadAllData()
@@ -45,8 +54,12 @@ namespace PocketSmithAttachmentManager.WebServices
             var transactionDataService = new TransactionDataService(_databaseFilePath);
 
             Console.Clear();
-            
+
+            var existingTransactions = await _transactionDataService.GetAll();
+
             var transactions = await _transactionService.GetAllTransactions();
+
+
 
             var progressBarOptions = new ProgressBarOptions()
             {
@@ -73,18 +86,8 @@ namespace PocketSmithAttachmentManager.WebServices
                     await processCategory(transaction.Category);
                 }
 
-                List<TransactionModel> existingTransactions = new List<TransactionModel>();
-                if (await transactionDataService.Exists(transaction.Id))
-                {
-                    //ToDo: Determine best way to check for changes and update if needed.
-                    existingTransactions.Add(transaction);
-                }
-                else
-                {
-                    await transactionDataService.Create(transaction);
-                }
-
-              
+                await processTransactions(transactions, existingTransactions);
+                
             }
 
             Console.ForegroundColor = ConsoleColor.Green;
@@ -191,6 +194,35 @@ namespace PocketSmithAttachmentManager.WebServices
             }
         }
 
+        private async Task processTransactions(IEnumerable<TransactionModel> apiTransactions, IEnumerable<TransactionModel> databaseTransactions)
+        {
+            List<TransactionModel> existingDbTransactions = new List<TransactionModel>();
 
+            Console.WriteLine("Creating new database transactions...");
+
+            //Check for existing transaction in database. Create if one does not exist.
+            foreach (var apiTransaction in apiTransactions)
+            {
+
+
+                if (!databaseTransactions.Any(x => x.Id == apiTransaction.Id))
+                {
+                   await _transactionDataService.Create(apiTransaction);
+                }
+                else
+                {
+                    existingDbTransactions.Add(apiTransaction);
+                }
+            }
+
+            Console.WriteLine("Cleaning up database transactions...");
+
+            //Update existing transactions if needed.
+            foreach (var transaction in existingDbTransactions)
+            {
+                var apiTransaction = apiTransactions.FirstOrDefault(x => x.Id == transaction.Id);
+            }
+
+        }
     }
 }
