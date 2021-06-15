@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using PocketSmith.DataExport;
 using PocketSmith.DataExport.Models;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace PocketSmith.DataExportServices
 {
@@ -32,6 +31,7 @@ namespace PocketSmith.DataExportServices
         {
             await using var context = ContextFactory.Create(DatabaseFilePath);
             var dbEntity = Mapper.Map<TDatabaseModel>(createItem);
+
             var createResult = await context.AddAsync(dbEntity);
             await context.SaveChangesAsync();
             return await GetById(createResult.Entity.Id);
