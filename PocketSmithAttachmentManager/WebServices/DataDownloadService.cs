@@ -1,36 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
-using AutoMapper;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PocketSmith.DataExport;
-using PocketSmith.DataExport.Models;
-using PocketSmith.DataExportServices;
 using PocketSmith.DataExportServices.Accounts;
 using PocketSmith.DataExportServices.Categories;
 using PocketSmith.DataExportServices.Institutions;
 using PocketSmith.DataExportServices.JsonModels;
 using PocketSmith.DataExportServices.Transactions;
 using ShellProgressBar;
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace PocketSmithAttachmentManager.WebServices
 {
     public class DataDownloadService
     {
         private readonly HttpClient _httpClient;
-        private readonly Type _parentType;
+        private readonly Type _parentMenuType;
         private readonly TransactionService _transactionService;
         private readonly ContextFactory _contextFactory;
         private string _databaseFilePath;
-        private readonly TransactionDataService _transactionDataService;
-        private readonly Mapper _mapper;
+        private TransactionDataService _transactionDataService;
+        private AccountDataService _accountDataService;
+        private CategoryDataService _categoryDataService;
+        private InstitutionDataService _institutionDataService;
 
 
-        public DataDownloadService(Type parentType)
+        public DataDownloadService(Type parentMenuType)
         {
             _httpClient = new HttpClient();
             _httpClient
@@ -40,18 +39,15 @@ namespace PocketSmithAttachmentManager.WebServices
                 .DefaultRequestHeaders
                 .Add("Accept", "application/json");
 
-            _parentType = parentType;
+            _parentMenuType = parentMenuType;
 
             _transactionService = new TransactionService();
             _contextFactory = new ContextFactory();
-            _transactionDataService = new TransactionDataService(_databaseFilePath);
-            _mapper = new Mapper(MapperConfigurationGenerator.Invoke());
         }
 
         public async Task DownloadAllData()
         {
             var context = _contextFactory.Create(_databaseFilePath);
-            var transactionDataService = new TransactionDataService(_databaseFilePath);
 
             Console.Clear();
 
@@ -77,13 +73,13 @@ namespace PocketSmithAttachmentManager.WebServices
                 //Add transaction account.
                 if (transaction.TransactionAccount != null)
                 {
-                    await processTransactionAccount(transaction.TransactionAccount);
+                    await processTransactionAccounts(transaction.TransactionAccount);
                 }
 
                 //Add category.
                 if (transaction.Category != null)
                 {
-                    await processCategory(transaction.Category);
+                    await processCategories(transaction.Category);
                 }
 
                 await processTransactions(transactions, existingTransactions);
@@ -98,6 +94,11 @@ namespace PocketSmithAttachmentManager.WebServices
         public async Task<bool> LoadDatabase(string filePath)
         {
             _databaseFilePath = filePath;
+
+            _transactionDataService = new TransactionDataService(filePath);
+            _accountDataService = new AccountDataService(filePath);
+            _categoryDataService = new CategoryDataService(filePath);
+            _institutionDataService = new InstitutionDataService(filePath);
 
             await using var context = _contextFactory.Create(filePath);
 
@@ -127,41 +128,56 @@ namespace PocketSmithAttachmentManager.WebServices
             return true;
         }
 
-        private async Task processTransactionAccount(AccountModel account)
+        private async Task processTransactionAccounts(IEnumerable<AccountModel> apiAccounts)
         {
-            var accountDataService = new AccountDataService(_databaseFilePath);
+            var dbAccounts = await _accountDataService.GetAll();
 
-            if (account.Institution != null)
+            foreach (var account in apiAccounts)
             {
-                await processInstitution(account.Institution);
+                if (!dbAccounts.Any(x => x.Id == account.Id))
+                {
+                    await _accountDataService.Create(account);
+                }
+                else
+                {
+                    var dbAccount = dbAccounts.FirstOrDefault(x => x.Id == account.Id);
+                    if (dbAccount != account)
+                    {
+                        await _accountDataService.Update(account, account.Id);
+                    }
+                }
             }
 
-            List<AccountModel> existingAccounts = new List<AccountModel>();
-            if (await accountDataService.Exists(account.AccountId))
+            foreach (var dbAccount in dbAccounts)
             {
-                existingAccounts.Add(account);
+                if (!apiAccounts.Any(x => x.Id == dbAccount.Id))
+                {
+                    await _accountDataService.Delete(dbAccount.Id);
+                }
             }
-            else
-            {
-                await accountDataService.Create(account);
-            }
+            
         }
 
-        private async Task processCategory(CategoryModel category)
+        private async Task processCategories(IEnumerable<CategoryModel> apiCategories)
         {
-            var categoryDataService = new CategoryDataService(_databaseFilePath);
+            var dbCategories = await _categoryDataService.GetAll();
 
-            List<CategoryModel> existingCategories = new List<CategoryModel>();
+            foreach (var category in apiCategories)
+            {
+                if (!dbCategories.Any(x => x.Id == category.Id))
+                {
+                   await _categoryDataService.Create(category);
+                }
+                else
+                {
+                    var dbCategory = dbCategories.FirstOrDefault(x => x.Id == category.Id);
+                    if (dbCategory != category)
+                    {
+                        await _categoryDataService.Update(category);
+                    }
+                }
+            }
 
-            
-            if (await categoryDataService.Exists(category.Id))
-            {
-                existingCategories.Add(category);
-            }
-            else
-            {
-                await categoryDataService.Create(category);
-            }
 
             //Process child categories.
 
@@ -178,25 +194,67 @@ namespace PocketSmithAttachmentManager.WebServices
             }
         }
 
-        private async Task processInstitution(InstitutionModel institution)
+        private async Task processInstitutions(IEnumerable<InstitutionModel> apiInstitutions)
         {
-            var institutionDataService = new InstitutionDataService(_databaseFilePath);
+           
 
-            List<InstitutionModel> existingInsitutions = new List<InstitutionModel>();
+            var existingInstitutions = await _institutionDataService.GetAll();
 
-            if (await institutionDataService.Exists(institution.Id))
+            var existingInstitution = existingInstitutions.FirstOrDefault(x => x.Id == institution.Id);
+
+            if (existingInstitution == null)
             {
-                existingInsitutions.Add(institution);
+                await _institutionDataService.Create(institution);
+                return;
             }
-            else
+
+            if (existingInstitution != institution)
             {
-                await institutionDataService.Create(institution);
+                await _institutionDataService.Update(institution, institution.Id);
             }
+
         }
 
-        private async Task processTransactions(IEnumerable<TransactionModel> apiTransactions, IEnumerable<TransactionModel> databaseTransactions)
+        private async Task processTransactions(IEnumerable<TransactionModel> apiTransactions)
         {
-            List<TransactionModel> existingDbTransactions = new List<TransactionModel>();
+            var dbInstitutions = await _institutionDataService.GetAll();
+            var dbCategories = await _categoryDataService.GetAll();
+            var dbAccounts = await _accountDataService.GetAll();
+
+            var dbTransactions = await _transactionDataService.GetAll();
+
+            var apiCategories = new List<CategoryModel>();
+            var apiAccounts = new List<AccountModel>();
+            var apiInstitutions = new List<InstitutionModel>();
+
+            foreach (var transaction in apiTransactions)
+            {
+                //Process categories.
+                if (transaction.Category != null && apiCategories.All(x => x.Id != transaction.Category.Id))
+                {
+                    apiCategories.Add(transaction.Category);
+                }
+
+                //Process accounts.
+                if (transaction.TransactionAccount != null &&
+                    apiAccounts.All(x => x.Id != transaction.TransactionAccount.Id))
+                {
+                    apiAccounts.Add(transaction.TransactionAccount);
+                }
+            }
+
+            //Process institutions.
+            foreach (var account in apiAccounts)
+            {
+                if (account != null && apiInstitutions.All(x => x.Id != account.Institution.Id))
+                {
+                    apiInstitutions.Add(account.Institution);
+                }
+            }
+            await processInstitutions(apiInstitutions);
+            await processTransactionAccounts(apiAccounts);
+            await processCategories(apiCategories);
+
 
             Console.WriteLine("Creating new database transactions...");
 
@@ -209,18 +267,30 @@ namespace PocketSmithAttachmentManager.WebServices
                 {
                    await _transactionDataService.Create(apiTransaction);
                 }
-                else
-                {
-                    existingDbTransactions.Add(apiTransaction);
-                }
+                
             }
 
             Console.WriteLine("Cleaning up database transactions...");
 
             //Update existing transactions if needed.
-            foreach (var transaction in existingDbTransactions)
+            foreach (var transaction in databaseTransactions)
             {
                 var apiTransaction = apiTransactions.FirstOrDefault(x => x.Id == transaction.Id);
+
+                if (apiTransaction != transaction)
+                {
+                    await _transactionDataService.Update(apiTransaction, transaction.Id);
+                }
+
+            }
+
+            //Delete database transactions that no longer exist in the API.
+            foreach (var dbTransaction in databaseTransactions)
+            {
+                if (!apiTransactions.Any(x => x.Id.Equals(dbTransaction.Id)))
+                {
+                   await _transactionDataService.Delete(dbTransaction.Id);
+                }
             }
 
         }
