@@ -51,10 +51,7 @@ namespace PocketSmithAttachmentManager.WebServices
 
             Console.Clear();
 
-            var existingTransactions = await _transactionDataService.GetAll();
-
             var transactions = await _transactionService.GetAllTransactions();
-
 
 
             var progressBarOptions = new ProgressBarOptions()
@@ -62,29 +59,13 @@ namespace PocketSmithAttachmentManager.WebServices
                 ProgressCharacter = ('-'),
                 DisplayTimeInRealTime = false
             };
-            using var progressBar = new ProgressBar(transactions.Count, "Adding Transactions to Database", ConsoleColor.White);
+            var entityCount = transactions.Count() + transactions.Select(x => x.TransactionAccount).Count() +
+                              transactions.Select(x => x.TransactionAccount.Institution).Count() + transactions.Select(x => x.Category).Count();
 
-            
+            using var progressBar = new ProgressBar(entityCount, "Adding Transactions to Database", ConsoleColor.White);
 
-            foreach (var transaction in transactions)
-            {
-                progressBar.Tick();
 
-                //Add transaction account.
-                if (transaction.TransactionAccount != null)
-                {
-                    await processTransactionAccounts(transaction.TransactionAccount);
-                }
-
-                //Add category.
-                if (transaction.Category != null)
-                {
-                    await processCategories(transaction.Category);
-                }
-
-                await processTransactions(transactions, existingTransactions);
-                
-            }
+            await processTransactions(transactions, progressBar);
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("All transactions downloaded successfully!");
@@ -128,12 +109,14 @@ namespace PocketSmithAttachmentManager.WebServices
             return true;
         }
 
-        private async Task processTransactionAccounts(IEnumerable<AccountModel> apiAccounts)
+        private async Task processTransactionAccounts(IEnumerable<AccountModel> apiAccounts, ProgressBar progressBar)
         {
             var dbAccounts = await _accountDataService.GetAll();
 
             foreach (var account in apiAccounts)
             {
+                progressBar.Tick();
+
                 if (!dbAccounts.Any(x => x.Id == account.Id))
                 {
                     await _accountDataService.Create(account);
@@ -158,12 +141,14 @@ namespace PocketSmithAttachmentManager.WebServices
             
         }
 
-        private async Task processCategories(IEnumerable<CategoryModel> apiCategories)
+        private async Task processCategories(IEnumerable<CategoryModel> apiCategories, ProgressBar progressBar)
         {
             var dbCategories = await _categoryDataService.GetAll();
 
             foreach (var category in apiCategories)
             {
+                progressBar.Tick();
+
                 if (!dbCategories.Any(x => x.Id == category.Id))
                 {
                    await _categoryDataService.Create(category);
@@ -173,119 +158,110 @@ namespace PocketSmithAttachmentManager.WebServices
                     var dbCategory = dbCategories.FirstOrDefault(x => x.Id == category.Id);
                     if (dbCategory != category)
                     {
-                        await _categoryDataService.Update(category);
+                        await _categoryDataService.Update(category, category.Id);
+                    }
+                }
+
+
+                //Process child categories.
+
+                foreach (var childCategory in category.Children)
+                {
+                    progressBar.Tick();
+
+                    if (!dbCategories.Any(x => x.Id == childCategory.Id))
+                    {
+                        await _categoryDataService.Create(childCategory);
+                    }
+                    else
+                    {
+                        var dbCategory = dbCategories.FirstOrDefault(x => x.Id == childCategory.Id);
+                        if (dbCategory != category)
+                        {
+                            await _categoryDataService.Update(childCategory, childCategory.Id);
+                        }
+                    }
+                }
+                
+            }
+            //Delete categories that don't exist in the API.
+            foreach (var dbCategory in dbCategories)
+            {
+                if (!apiCategories.Any(x => x.Id == dbCategory.Id) && !apiCategories.SelectMany(x => x.Children).Any(y => y.Id == dbCategory.Id))
+                {
+                    await _categoryDataService.Delete(dbCategory.Id);
+                }
+            }
+        }
+
+        private async Task processInstitutions(IEnumerable<InstitutionModel> apiInstitutions, ProgressBar progressBar)
+        {
+            var dbInstitutions = await _institutionDataService.GetAll();
+
+            foreach (var institution in apiInstitutions)
+            {
+                progressBar.Tick();
+
+                if (!apiInstitutions.Any(x => x.Id == institution.Id))
+                {
+                    await _institutionDataService.Create(institution);
+                }
+                else
+                {
+                    var dbInstitution = await _institutionDataService.GetById(institution.Id);
+                    if (dbInstitution != institution)
+                    {
+                        await _institutionDataService.Update(institution, institution.Id);
                     }
                 }
             }
 
-
-            //Process child categories.
-
-            foreach (var childCategory in category.Children)
+            foreach (var dbInstitution in dbInstitutions)
             {
-                if (await categoryDataService.Exists(childCategory.Id))
+                if (!apiInstitutions.Any(x => x.Id == dbInstitution.Id))
                 {
-                    existingCategories.Add(childCategory);
-                }
-                else
-                {
-                    await categoryDataService.Create(childCategory);
+                    await _institutionDataService.Delete(dbInstitution.Id);
                 }
             }
         }
 
-        private async Task processInstitutions(IEnumerable<InstitutionModel> apiInstitutions)
+        private async Task processTransactions(IEnumerable<TransactionModel> apiTransactions, ProgressBar progressBar)
         {
-           
-
-            var existingInstitutions = await _institutionDataService.GetAll();
-
-            var existingInstitution = existingInstitutions.FirstOrDefault(x => x.Id == institution.Id);
-
-            if (existingInstitution == null)
-            {
-                await _institutionDataService.Create(institution);
-                return;
-            }
-
-            if (existingInstitution != institution)
-            {
-                await _institutionDataService.Update(institution, institution.Id);
-            }
-
-        }
-
-        private async Task processTransactions(IEnumerable<TransactionModel> apiTransactions)
-        {
-            var dbInstitutions = await _institutionDataService.GetAll();
-            var dbCategories = await _categoryDataService.GetAll();
-            var dbAccounts = await _accountDataService.GetAll();
 
             var dbTransactions = await _transactionDataService.GetAll();
 
-            var apiCategories = new List<CategoryModel>();
-            var apiAccounts = new List<AccountModel>();
-            var apiInstitutions = new List<InstitutionModel>();
-
             foreach (var transaction in apiTransactions)
             {
-                //Process categories.
-                if (transaction.Category != null && apiCategories.All(x => x.Id != transaction.Category.Id))
-                {
-                    apiCategories.Add(transaction.Category);
-                }
+                progressBar.Tick();
 
-                //Process accounts.
-                if (transaction.TransactionAccount != null &&
-                    apiAccounts.All(x => x.Id != transaction.TransactionAccount.Id))
-                {
-                    apiAccounts.Add(transaction.TransactionAccount);
-                }
+                await processCategories(new List<CategoryModel>() {transaction.Category}, progressBar);
+                await processInstitutions(new List<InstitutionModel>() {transaction.TransactionAccount.Institution}, progressBar);
+                await processTransactionAccounts(new List<AccountModel>() {transaction.TransactionAccount}, progressBar);
             }
-
-            //Process institutions.
-            foreach (var account in apiAccounts)
-            {
-                if (account != null && apiInstitutions.All(x => x.Id != account.Institution.Id))
-                {
-                    apiInstitutions.Add(account.Institution);
-                }
-            }
-            await processInstitutions(apiInstitutions);
-            await processTransactionAccounts(apiAccounts);
-            await processCategories(apiCategories);
-
 
             Console.WriteLine("Creating new database transactions...");
 
             //Check for existing transaction in database. Create if one does not exist.
             foreach (var apiTransaction in apiTransactions)
             {
-
-
-                if (!databaseTransactions.Any(x => x.Id == apiTransaction.Id))
+                if (!dbTransactions.Any(x => x.Id == apiTransaction.Id))
                 {
                    await _transactionDataService.Create(apiTransaction);
                 }
-                
+                else
+                {
+                    var dbTransaction = dbTransactions.FirstOrDefault(x => x.Id == apiTransaction.Id);
+                    if (dbTransaction != apiTransaction)
+                    {
+                        await _transactionDataService.Update(apiTransaction, apiTransaction.Id);
+                    }
+                }
             }
 
             Console.WriteLine("Cleaning up database transactions...");
 
-            //Update existing transactions if needed.
-            foreach (var transaction in databaseTransactions)
-            {
-                var apiTransaction = apiTransactions.FirstOrDefault(x => x.Id == transaction.Id);
-
-                if (apiTransaction != transaction)
-                {
-                    await _transactionDataService.Update(apiTransaction, transaction.Id);
-                }
-
-            }
-
             //Delete database transactions that no longer exist in the API.
-            foreach (var dbTransaction in databaseTransactions)
+            foreach (var dbTransaction in dbTransactions)
             {
                 if (!apiTransactions.Any(x => x.Id.Equals(dbTransaction.Id)))
                 {
