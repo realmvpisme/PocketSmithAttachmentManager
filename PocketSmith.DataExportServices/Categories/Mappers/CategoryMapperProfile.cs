@@ -16,6 +16,10 @@ namespace PocketSmith.DataExportServices.Categories.Mappers
                 .ForMember(dest => dest.LastUpdated, map =>
                 {
                     map.MapFrom(src => src.UpdatedAt);
+                })
+                .ForMember(dest => dest.Color, map =>
+                {
+                    map.MapFrom(src => src.Colour);
                 }).ReverseMap();
         }
     }
