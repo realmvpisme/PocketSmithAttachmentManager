@@ -20,7 +20,13 @@ namespace PocketSmith.DataExportServices.Categories.Mappers
                 .ForMember(dest => dest.Color, map =>
                 {
                     map.MapFrom(src => src.Colour);
-                }).ReverseMap();
+                })
+                .ForMember(dest => dest.ParentId, map =>
+                {
+                    map.AllowNull();
+                    map.MapFrom(src => src.ParentId);
+                })
+                .ReverseMap();
         }
     }
 }

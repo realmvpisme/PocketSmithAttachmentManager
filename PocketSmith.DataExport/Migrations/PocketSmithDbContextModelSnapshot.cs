@@ -162,8 +162,6 @@ namespace PocketSmith.DataExport.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ParentId");
-
                     b.ToTable("Categories");
                 });
 
@@ -335,13 +333,6 @@ namespace PocketSmith.DataExport.Migrations
                     b.HasOne("PocketSmith.DataExport.Models.DB_Variant", "Variants")
                         .WithMany("Attachments")
                         .HasForeignKey("VariantsId");
-                });
-
-            modelBuilder.Entity("PocketSmith.DataExport.Models.DB_Category", b =>
-                {
-                    b.HasOne("PocketSmith.DataExport.Models.DB_Category", "Parent")
-                        .WithMany("Children")
-                        .HasForeignKey("ParentId");
                 });
 
             modelBuilder.Entity("PocketSmith.DataExport.Models.DB_Transaction", b =>
