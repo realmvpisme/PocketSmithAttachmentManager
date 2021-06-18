@@ -25,12 +25,6 @@ namespace PocketSmith.DataExport.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Categories", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Categories_Categories_ParentId",
-                        column: x => x.ParentId,
-                        principalTable: "Categories",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -218,11 +212,6 @@ namespace PocketSmith.DataExport.Migrations
                 name: "IX_Attachments_VariantsId",
                 table: "Attachments",
                 column: "VariantsId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Categories_ParentId",
-                table: "Categories",
-                column: "ParentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Transactions_AccountId",

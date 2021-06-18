@@ -142,10 +142,11 @@ namespace PocketSmithAttachmentManager.WebServices
         }
 
         private async Task processCategories(IEnumerable<CategoryModel> apiCategories, ProgressBar progressBar)
+        
         {
             var dbCategories = await _categoryDataService.GetAll();
 
-            foreach (var category in apiCategories)
+            foreach (var category in apiCategories.Where(x => x != null))
             {
                 progressBar.Tick();
 
@@ -164,26 +165,29 @@ namespace PocketSmithAttachmentManager.WebServices
 
 
                 //Process child categories.
-
-                foreach (var childCategory in category.Children)
+                if (category?.Children != null)
                 {
-                    progressBar.Tick();
+                    foreach (var childCategory in category.Children)
+                    {
+                        progressBar.Tick();
 
-                    if (!dbCategories.Any(x => x.Id == childCategory.Id))
-                    {
-                        await _categoryDataService.Create(childCategory);
-                    }
-                    else
-                    {
-                        var dbCategory = dbCategories.FirstOrDefault(x => x.Id == childCategory.Id);
-                        if (dbCategory != category)
+                        if (!dbCategories.Any(x => x.Id == childCategory.Id))
                         {
-                            await _categoryDataService.Update(childCategory, childCategory.Id);
+                            await _categoryDataService.Create(childCategory);
+                        }
+                        else
+                        {
+                            var dbCategory = dbCategories.FirstOrDefault(x => x.Id == childCategory.Id);
+                            if (dbCategory != category)
+                            {
+                                await _categoryDataService.Update(childCategory, childCategory.Id);
+                            }
                         }
                     }
+
                 }
-                
             }
+                
             //Delete categories that don't exist in the API.
             foreach (var dbCategory in dbCategories)
             {
