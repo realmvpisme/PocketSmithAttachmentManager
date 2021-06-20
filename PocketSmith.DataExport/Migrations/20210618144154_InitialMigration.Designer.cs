@@ -9,7 +9,7 @@ using PocketSmith.DataExport;
 namespace PocketSmith.DataExport.Migrations
 {
     [DbContext(typeof(PocketSmithDbContext))]
-    [Migration("20210618120409_InitialMigration")]
+    [Migration("20210618144154_InitialMigration")]
     partial class InitialMigration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -163,6 +163,8 @@ namespace PocketSmith.DataExport.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ParentId");
 
                     b.ToTable("Categories");
                 });
@@ -335,6 +337,13 @@ namespace PocketSmith.DataExport.Migrations
                     b.HasOne("PocketSmith.DataExport.Models.DB_Variant", "Variants")
                         .WithMany("Attachments")
                         .HasForeignKey("VariantsId");
+                });
+
+            modelBuilder.Entity("PocketSmith.DataExport.Models.DB_Category", b =>
+                {
+                    b.HasOne("PocketSmith.DataExport.Models.DB_Category", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId");
                 });
 
             modelBuilder.Entity("PocketSmith.DataExport.Models.DB_Transaction", b =>

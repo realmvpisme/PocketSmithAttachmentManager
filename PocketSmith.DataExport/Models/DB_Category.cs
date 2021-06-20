@@ -11,6 +11,9 @@ namespace PocketSmith.DataExport.Models
         public string RefundBehaviour { get; set; }
         public bool RollUp { get; set; }
         public long? ParentId { get; set; }
+        public DB_Category Parent { get; set; }
+
+        public ICollection<DB_Category> Children { get; set; }
 
     }
 }
