@@ -92,7 +92,7 @@ namespace PocketSmithAttachmentManager.Menus
                 }
             } while (transactionAmount <= 0.00m);
 
-            var transactions = await _transactionService.GetTransactionsByAmount(transactionAmount);
+            var transactions = await _transactionService.GetByAmount(transactionAmount);
 
             foreach (var transaction in transactions)
             {
@@ -149,7 +149,7 @@ namespace PocketSmithAttachmentManager.Menus
                 }
             } while (endDate == null);
 
-            var transactions = await _transactionService.GetTransactionsByDate(Convert.ToDateTime(startDate), endDate);
+            var transactions = await _transactionService.GetByDate(Convert.ToDateTime(startDate), endDate);
 
             foreach (var transaction in transactions)
             {
@@ -174,7 +174,7 @@ namespace PocketSmithAttachmentManager.Menus
                 }
             } while (string.IsNullOrEmpty(transactionPayee));
 
-            var transactions = await _transactionService.GetTransactionsByPayee(transactionPayee);
+            var transactions = await _transactionService.GetByPayee(transactionPayee);
             foreach (var transaction in transactions)
             {
                 transaction.Attachments = await _attachmentService.GetByTransactionId(transaction.Id);

@@ -41,9 +41,15 @@ namespace PocketSmith.DataExportServices
         {
             await using var context = ContextFactory.Create(DatabaseFilePath);
 
-            var dbEntity = await context.Set<TDatabaseModel>().FirstOrDefaultAsync(x => x.Id == id);
-            dbEntity = Mapper.Map<TDatabaseModel>(updateItem);
-            context.Update(dbEntity);
+            var dbEntity = await context.Set<TDatabaseModel>().FindAsync((object)id);
+
+            if (dbEntity == null)
+            {
+                return;
+            }
+
+            var updatedEntity = Mapper.Map(updateItem, dbEntity);
+            context.Entry(updatedEntity).State = EntityState.Modified;
             await context.SaveChangesAsync();
         }
 

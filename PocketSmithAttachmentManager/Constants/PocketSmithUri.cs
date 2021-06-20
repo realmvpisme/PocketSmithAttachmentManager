@@ -21,5 +21,11 @@
 
         public const string UNASSIGNED_ATTACHMENTS =
             "https://api.pocketsmith.com/v2/users/{userId}/attachments?per_page=100&unassigned=1";
+
+        public const string TRANSACTION_BY_ID = "https://api.pocketsmith.com/v2/transactions/{id}";
+        public const string ALL_CATEGORIES = "https://api.pocketsmith.com/v2/users/{userId}/categories";
+
+        public const string CATEGORY_BY_ID = "https://api.pocketsmith.com/v2/categories/{id}";
+
     }
 }

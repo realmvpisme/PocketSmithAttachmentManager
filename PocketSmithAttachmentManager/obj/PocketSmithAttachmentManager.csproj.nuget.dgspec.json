@@ -224,6 +224,10 @@
               "target": "Package",
               "version": "[3.1.15, )"
             },
+            "ObjectsComparer": {
+              "target": "Package",
+              "version": "[1.4.1, )"
+            },
             "ShellProgressBar": {
               "target": "Package",
               "version": "[5.1.0, )"

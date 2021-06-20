@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using ObjectsComparer;
 
 namespace PocketSmithAttachmentManager.WebServices
 {
@@ -27,6 +28,7 @@ namespace PocketSmithAttachmentManager.WebServices
         private AccountDataService _accountDataService;
         private CategoryDataService _categoryDataService;
         private InstitutionDataService _institutionDataService;
+        private CategoryService _categoryService;
 
 
         public DataDownloadService(Type parentMenuType)
@@ -43,6 +45,7 @@ namespace PocketSmithAttachmentManager.WebServices
 
             _transactionService = new TransactionService();
             _contextFactory = new ContextFactory();
+            _categoryService = new CategoryService();
         }
 
         public async Task DownloadAllData()
@@ -51,21 +54,37 @@ namespace PocketSmithAttachmentManager.WebServices
 
             Console.Clear();
 
-            var transactions = await _transactionService.GetAllTransactions();
+            var apiTransactions = await _transactionService.GetAll();
+
+            var apiCategories = await resolveCategories(apiTransactions);
+            
+            var apiAccounts = apiTransactions
+                .Select(x => x.TransactionAccount)
+                .Where(x => x != null)
+                .GroupBy(x => x.Id)
+                .Select(group => group.First())
+                .ToList();
+
+            var apiInstitutions = apiTransactions
+                .Select(x => x.TransactionAccount)
+                .Where(x => x != null)
+                .Select(y => y.Institution)
+                .Where(x => x != null)
+                .GroupBy(x => x.Id)
+                .Select(group => group.First())
+                .ToList();
 
 
-            var progressBarOptions = new ProgressBarOptions()
-            {
-                ProgressCharacter = ('-'),
-                DisplayTimeInRealTime = false
-            };
-            var entityCount = transactions.Count() + transactions.Select(x => x.TransactionAccount).Count() +
-                              transactions.Select(x => x.TransactionAccount.Institution).Count() + transactions.Select(x => x.Category).Count();
+            var entityCount = apiTransactions.Count() + apiCategories.Count() + apiInstitutions.Count() +
+                              apiAccounts.Count();
+
 
             using var progressBar = new ProgressBar(entityCount, "Adding Transactions to Database", ConsoleColor.White);
 
-
-            await processTransactions(transactions, progressBar);
+            await processCategories(apiCategories, progressBar);
+            await processInstitutions(apiInstitutions, progressBar);
+            await processTransactionAccounts(apiAccounts, progressBar);
+            await processTransactions(apiTransactions, progressBar);
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("All transactions downloaded successfully!");
@@ -113,6 +132,7 @@ namespace PocketSmithAttachmentManager.WebServices
         {
             var dbAccounts = await _accountDataService.GetAll();
 
+
             foreach (var account in apiAccounts)
             {
                 progressBar.Tick();
@@ -142,7 +162,6 @@ namespace PocketSmithAttachmentManager.WebServices
         }
 
         private async Task processCategories(IEnumerable<CategoryModel> apiCategories, ProgressBar progressBar)
-        
         {
             var dbCategories = await _categoryDataService.GetAll();
 
@@ -152,42 +171,24 @@ namespace PocketSmithAttachmentManager.WebServices
 
                 if (!dbCategories.Any(x => x.Id == category.Id))
                 {
-                   await _categoryDataService.Create(category);
+                    await _categoryDataService.Create(category);
                 }
                 else
                 {
                     var dbCategory = dbCategories.FirstOrDefault(x => x.Id == category.Id);
-                    if (dbCategory != category)
+
+                    var comparer = new ObjectsComparer.Comparer<CategoryModel>();
+                    IEnumerable<Difference> differences;
+                    var categoriesEqual = comparer.Compare(category, dbCategory, out differences);
+
+                    if (!categoriesEqual)
                     {
                         await _categoryDataService.Update(category, category.Id);
                     }
                 }
 
-
-                //Process child categories.
-                if (category?.Children != null)
-                {
-                    foreach (var childCategory in category.Children)
-                    {
-                        progressBar.Tick();
-
-                        if (!dbCategories.Any(x => x.Id == childCategory.Id))
-                        {
-                            await _categoryDataService.Create(childCategory);
-                        }
-                        else
-                        {
-                            var dbCategory = dbCategories.FirstOrDefault(x => x.Id == childCategory.Id);
-                            if (dbCategory != category)
-                            {
-                                await _categoryDataService.Update(childCategory, childCategory.Id);
-                            }
-                        }
-                    }
-
-                }
             }
-                
+
             //Delete categories that don't exist in the API.
             foreach (var dbCategory in dbCategories)
             {
@@ -234,15 +235,6 @@ namespace PocketSmithAttachmentManager.WebServices
 
             var dbTransactions = await _transactionDataService.GetAll();
 
-            foreach (var transaction in apiTransactions)
-            {
-                progressBar.Tick();
-
-                await processCategories(new List<CategoryModel>() {transaction.Category}, progressBar);
-                await processInstitutions(new List<InstitutionModel>() {transaction.TransactionAccount.Institution}, progressBar);
-                await processTransactionAccounts(new List<AccountModel>() {transaction.TransactionAccount}, progressBar);
-            }
-
             Console.WriteLine("Creating new database transactions...");
 
             //Check for existing transaction in database. Create if one does not exist.
@@ -274,5 +266,42 @@ namespace PocketSmithAttachmentManager.WebServices
             }
 
         }
+
+        private async Task<IEnumerable<CategoryModel>> resolveCategories(IEnumerable<TransactionModel> transactions)
+        {
+            var apiCategories = transactions
+                .Select(x => x.Category)
+                .Where(x => x != null)
+                .GroupBy(x => x.Id)
+                .Select(group => group.First())
+                .OrderBy(x => x.Id)
+                .ThenBy(x => x.ParentId)
+                .ToList();
+
+            do
+            {
+                List<CategoryModel> missingCategories = new List<CategoryModel>();
+
+                foreach (var category in apiCategories)
+                {
+                    if (category.ParentId != null && apiCategories.All(x => x.Id != category.ParentId))
+                    {
+                        var apiCategory = await _categoryService.GetById(Convert.ToInt64(category.ParentId));
+                        missingCategories.Add(apiCategory);
+                    }
+                }
+                apiCategories.AddRange(missingCategories);
+            } while (apiCategories.Any(x => x.ParentId != null && apiCategories.All(y => y.Id != x.ParentId)));
+
+            apiCategories = apiCategories.Where(x => x != null)
+                .GroupBy(x => x.Id)
+                .Select(group => group.First())
+                .OrderBy(x => x.Id)
+                .ThenBy(x => x.ParentId)
+                .ToList();
+
+            return apiCategories;
+        }
+
     }
 }
