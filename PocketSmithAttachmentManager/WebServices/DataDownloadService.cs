@@ -296,11 +296,29 @@ namespace PocketSmithAttachmentManager.WebServices
             apiCategories = apiCategories.Where(x => x != null)
                 .GroupBy(x => x.Id)
                 .Select(group => group.First())
-                .OrderBy(x => x.Id)
+                .OrderBy(x => x.ParentId)
                 .ThenBy(x => x.ParentId)
                 .ToList();
 
-            return apiCategories;
+            var returnCategories = apiCategories
+                .Where(x => x.ParentId == null)
+                .OrderBy(x => x.Id)
+                .ToList();
+
+            apiCategories.RemoveAll(x => returnCategories.Any(y => y.Id == x.Id));
+
+            foreach (var category in apiCategories.OrderBy(x => x.ParentId).ToList())
+            {
+                if (returnCategories.All(x => x.Id != category.ParentId))
+                {
+                    returnCategories.Add(apiCategories.First(x => x.Id == category.ParentId));
+                }
+            }
+            apiCategories.RemoveAll(x => returnCategories.Any(y => y.Id == x.Id));
+
+            returnCategories = apiCategories.OrderBy(x => x.Id).ToList();
+
+            return returnCategories;
         }
 
     }
