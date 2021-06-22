@@ -307,16 +307,11 @@ namespace PocketSmithAttachmentManager.WebServices
 
             apiCategories.RemoveAll(x => returnCategories.Any(y => y.Id == x.Id));
 
-            foreach (var category in apiCategories.OrderBy(x => x.ParentId).ToList())
+            do
             {
-                if (returnCategories.All(x => x.Id != category.ParentId))
-                {
-                    returnCategories.Add(apiCategories.First(x => x.Id == category.ParentId));
-                }
-            }
-            apiCategories.RemoveAll(x => returnCategories.Any(y => y.Id == x.Id));
-
-            returnCategories = apiCategories.OrderBy(x => x.Id).ToList();
+                returnCategories.AddRange(apiCategories.Where(x => returnCategories.Any(y => y.Id == x.ParentId)));
+                apiCategories.RemoveAll(x => returnCategories.Any(y => y.Id == x.Id));
+            } while (apiCategories.Any());
 
             return returnCategories;
         }
