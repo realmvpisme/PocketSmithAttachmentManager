@@ -62,12 +62,12 @@ namespace PocketSmith.DataExportServices
             await context.SaveChangesAsync();
         }
 
-        public virtual async Task<IEnumerable<TJsonModel>> GetAll()
+        public virtual async Task<List<TJsonModel>> GetAll()
         {
             await using var context = ContextFactory.Create(DatabaseFilePath);
 
             var dbEntities = await context.Set<TDatabaseModel>().ToListAsync();
-            var mappedEntities = Mapper.Map<IEnumerable<TJsonModel>>(dbEntities);
+            var mappedEntities = Mapper.Map<List<TJsonModel>>(dbEntities);
 
             return mappedEntities;
         }
