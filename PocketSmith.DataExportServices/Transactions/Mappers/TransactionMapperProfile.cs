@@ -25,7 +25,9 @@ namespace PocketSmith.DataExportServices.Transactions.Mappers
                 .ForMember(dest => dest.LastUpdated, map =>
                 {
                     map.MapFrom(src => src.UpdatedAt);
-                }).ReverseMap();
+                })
+                .ForMember(dest => dest.Category, map => map.Ignore())
+                .ForMember(dest => dest.Account, map => map.Ignore()).ReverseMap();
         }
     }
 }

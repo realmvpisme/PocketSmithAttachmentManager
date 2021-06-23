@@ -20,7 +20,9 @@ namespace PocketSmith.DataExportServices.Accounts.Mappers
                 .ForMember(dest => dest.LastUpdated, map =>
                 {
                     map.MapFrom(src => src.UpdatedAt);
-                }).ReverseMap();
+                })
+                .ForMember(dest => dest.Institution, map => map.Ignore())
+                .ReverseMap();
         }
     }
 }

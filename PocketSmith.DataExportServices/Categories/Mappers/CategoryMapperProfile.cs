@@ -26,6 +26,7 @@ namespace PocketSmith.DataExportServices.Categories.Mappers
                     map.AllowNull();
                     map.MapFrom(src => src.ParentId);
                 })
+                .ForMember(dest => dest.Children, map => map.Ignore())
                 .ReverseMap();
         }
     }

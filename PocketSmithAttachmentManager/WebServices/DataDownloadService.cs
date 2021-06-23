@@ -136,15 +136,20 @@ namespace PocketSmithAttachmentManager.WebServices
             foreach (var account in apiAccounts)
             {
                 progressBar.Tick();
+                var selectedDbAccount = dbAccounts.FirstOrDefault(x => x.Id == account.Id);
 
-                if (!dbAccounts.Any(x => x.Id == account.Id))
+                if (selectedDbAccount == null)
                 {
-                    await _accountDataService.Create(account);
+                    var createResult = await _accountDataService.Create(account);
+                    dbAccounts.Add(createResult);
                 }
                 else
                 {
-                    var dbAccount = dbAccounts.FirstOrDefault(x => x.Id == account.Id);
-                    if (dbAccount != account)
+                    var comparer = new ObjectsComparer.Comparer<AccountModel>();
+                    comparer.IgnoreMember(x => x.Name == "Institution");
+                    var accountsEqual = comparer.Compare(account, selectedDbAccount);
+
+                    if (!accountsEqual)
                     {
                         await _accountDataService.Update(account, account.Id);
                     }
@@ -168,18 +173,18 @@ namespace PocketSmithAttachmentManager.WebServices
             foreach (var category in apiCategories.Where(x => x != null))
             {
                 progressBar.Tick();
-
-                if (!dbCategories.Any(x => x.Id == category.Id))
+                var selectedDbCategory = dbCategories.FirstOrDefault(x => x.Id == category.Id);
+                if (selectedDbCategory == null)
                 {
-                    await _categoryDataService.Create(category);
+                    var createResult = await _categoryDataService.Create(category);
+                    dbCategories.Add(createResult);
                 }
                 else
                 {
-                    var dbCategory = dbCategories.FirstOrDefault(x => x.Id == category.Id);
 
                     var comparer = new ObjectsComparer.Comparer<CategoryModel>();
-                    IEnumerable<Difference> differences;
-                    var categoriesEqual = comparer.Compare(category, dbCategory, out differences);
+                    comparer.IgnoreMember(x => x.Name == "Children");
+                    var categoriesEqual = comparer.Compare(category, selectedDbCategory);
 
                     if (!categoriesEqual)
                     {
@@ -193,7 +198,7 @@ namespace PocketSmithAttachmentManager.WebServices
             foreach (var dbCategory in dbCategories)
             {
                 if (!apiCategories.Any(x => x.Id == dbCategory.Id) && !apiCategories.SelectMany(x => x.Children).Any(y => y.Id == dbCategory.Id))
-                {
+                { 
                     await _categoryDataService.Delete(dbCategory.Id);
                 }
             }
@@ -207,14 +212,17 @@ namespace PocketSmithAttachmentManager.WebServices
             {
                 progressBar.Tick();
 
-                if (!apiInstitutions.Any(x => x.Id == institution.Id))
+                var selectedInstitution = dbInstitutions.FirstOrDefault(x => x.Id == institution.Id);
+                if (selectedInstitution == null)
                 {
-                    await _institutionDataService.Create(institution);
+                    var createResult = await _institutionDataService.Create(institution);
+                    dbInstitutions.Add(createResult);
                 }
                 else
                 {
-                    var dbInstitution = await _institutionDataService.GetById(institution.Id);
-                    if (dbInstitution != institution)
+                    var comparer = new ObjectsComparer.Comparer<InstitutionModel>();
+                    var institutionsEqual = comparer.Compare(institution, selectedInstitution);
+                    if (!institutionsEqual)
                     {
                         await _institutionDataService.Update(institution, institution.Id);
                     }
@@ -240,14 +248,19 @@ namespace PocketSmithAttachmentManager.WebServices
             //Check for existing transaction in database. Create if one does not exist.
             foreach (var apiTransaction in apiTransactions)
             {
-                if (!dbTransactions.Any(x => x.Id == apiTransaction.Id))
+                var selectedDbTransaction = dbTransactions.FirstOrDefault(x => x.Id == apiTransaction.Id);
+                if (selectedDbTransaction == null)
                 {
-                   await _transactionDataService.Create(apiTransaction);
+                   var createResult = await _transactionDataService.Create(apiTransaction);
+                   dbTransactions.Add(createResult);
                 }
                 else
                 {
-                    var dbTransaction = dbTransactions.FirstOrDefault(x => x.Id == apiTransaction.Id);
-                    if (dbTransaction != apiTransaction)
+                    var comparer = new ObjectsComparer.Comparer<TransactionModel>();
+                    comparer.IgnoreMember(x => x.Name == "Category");
+                    comparer.IgnoreMember(x => x.Name == "TransactionAccount");
+                    var transactionsEqual = comparer.Compare(apiTransaction, selectedDbTransaction);
+                    if (!transactionsEqual)
                     {
                         await _transactionDataService.Update(apiTransaction, apiTransaction.Id);
                     }

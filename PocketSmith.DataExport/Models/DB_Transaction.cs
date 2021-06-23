@@ -22,9 +22,9 @@ namespace PocketSmith.DataExport.Models
         public string CreatedAt { get; set; }
         public string UpdatedAt { get; set; }
 
-        public long CategoryId { get; set; }
+        public long? CategoryId { get; set; }
         public DB_Category Category { get; set; }
-        public long AccountId { get; set; }
+        public long? AccountId { get; set; }
         public DB_Account Account { get; set; }
 
         public ICollection<DB_Attachment> Attachments { get; set; }
