@@ -12,8 +12,10 @@ using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using ObjectsComparer;
+using PocketSmithAttachmentManager.Menus;
 
 namespace PocketSmithAttachmentManager.WebServices
 {
@@ -86,9 +88,21 @@ namespace PocketSmithAttachmentManager.WebServices
             await processTransactionAccounts(apiAccounts, progressBar);
             await processTransactions(apiTransactions, progressBar);
 
+            progressBar.Dispose();
+
+            Console.Clear();
+
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("All transactions downloaded successfully!");
             Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine("Returning to main menu...");
+
+            Thread.Sleep(5000);
+
+            MainMenu.Show();
+
+
+
         }
 
         public async Task<bool> LoadDatabase(string filePath)
@@ -248,6 +262,8 @@ namespace PocketSmithAttachmentManager.WebServices
             //Check for existing transaction in database. Create if one does not exist.
             foreach (var apiTransaction in apiTransactions)
             {
+                progressBar.Tick();
+
                 var selectedDbTransaction = dbTransactions.FirstOrDefault(x => x.Id == apiTransaction.Id);
                 if (selectedDbTransaction == null)
                 {
