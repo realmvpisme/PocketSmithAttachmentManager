@@ -9,7 +9,7 @@ using PocketSmith.DataExport;
 namespace PocketSmith.DataExport.Migrations
 {
     [DbContext(typeof(PocketSmithDbContext))]
-    [Migration("20210618144154_InitialMigration")]
+    [Migration("20210624111804_InitialMigration")]
     partial class InitialMigration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -222,7 +222,7 @@ namespace PocketSmith.DataExport.Migrations
                     b.Property<long>("Id")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long>("AccountId")
+                    b.Property<long?>("AccountId")
                         .HasColumnType("INTEGER");
 
                     b.Property<decimal>("Amount")
@@ -231,7 +231,7 @@ namespace PocketSmith.DataExport.Migrations
                     b.Property<decimal>("AmountInBaseCurrency")
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("CategoryId")
+                    b.Property<long?>("CategoryId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("CheckNumber")
@@ -350,15 +350,11 @@ namespace PocketSmith.DataExport.Migrations
                 {
                     b.HasOne("PocketSmith.DataExport.Models.DB_Account", "Account")
                         .WithMany()
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("AccountId");
 
                     b.HasOne("PocketSmith.DataExport.Models.DB_Category", "Category")
                         .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CategoryId");
                 });
 #pragma warning restore 612, 618
         }

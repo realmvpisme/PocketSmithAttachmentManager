@@ -139,8 +139,8 @@ namespace PocketSmith.DataExport.Migrations
                     Labels = table.Column<string>(nullable: true),
                     CreatedAt = table.Column<string>(nullable: true),
                     UpdatedAt = table.Column<string>(nullable: true),
-                    CategoryId = table.Column<long>(nullable: false),
-                    AccountId = table.Column<long>(nullable: false)
+                    CategoryId = table.Column<long>(nullable: true),
+                    AccountId = table.Column<long>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -150,13 +150,13 @@ namespace PocketSmith.DataExport.Migrations
                         column: x => x.AccountId,
                         principalTable: "Accounts",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Transactions_Categories_CategoryId",
                         column: x => x.CategoryId,
                         principalTable: "Categories",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(

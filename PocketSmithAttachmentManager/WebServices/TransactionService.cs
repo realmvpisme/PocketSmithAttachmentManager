@@ -59,7 +59,7 @@ namespace PocketSmithAttachmentManager.WebServices
 
                 progressBar.Tick();
                 //ToDo: Remove transaction count criteria.
-            } while (RestClient.CurrentPageUri != RestClient.LastPageUri && transactionList.Count < 200);
+            } while (RestClient.CurrentPageUri != RestClient.LastPageUri);
 
             progressBar.Dispose();
 
