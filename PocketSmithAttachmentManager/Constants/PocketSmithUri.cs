@@ -2,6 +2,7 @@
 {
     public static class PocketSmithUri
     {
+        public const string BASE_URI = "https://api.pocketsmith.com/v2";
         public const string GET_ALL_USER_TRANSACTIONS =
             "https://api.pocketsmith.com/v2/users/{userId}/transactions?per_page=100";
 
