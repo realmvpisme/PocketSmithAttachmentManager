@@ -52,9 +52,5 @@ namespace PocketSmith.DataExportServices.JsonModels
         [JsonPropertyName("updated_at")]
         public DateTime? UpdatedAt { get; set; }
 
-
-
-
-
     }
 }
