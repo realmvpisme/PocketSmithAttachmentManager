@@ -21,6 +21,8 @@ namespace PocketSmith.DataExport
         public DbSet<DB_Institution> Institutions { get; set; }
         public DbSet<DB_Transaction> Transactions { get; set; }
         public DbSet<DB_Variant> Variants { get; set; }
+        public DbSet<DB_BudgetEvent> BudgetEvents { get; set; }
+        public DbSet<DB_Scenario> Scenarios { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -31,6 +33,8 @@ namespace PocketSmith.DataExport
             modelBuilder.Entity<DB_Institution>().ToTable("Institutions");
             modelBuilder.Entity<DB_Transaction>().ToTable("Transactions");
             modelBuilder.Entity<DB_Variant>().ToTable("Variants");
+            modelBuilder.Entity<DB_BudgetEvent>().ToTable("BudgetEvents");
+            modelBuilder.Entity<DB_Scenario>().ToTable("Scenarios");
 
 
             modelBuilder.Entity<DB_Account>()

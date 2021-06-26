@@ -14,6 +14,7 @@ namespace PocketSmith.DataExport.Models
         public DB_Category Parent { get; set; }
 
         public ICollection<DB_Category> Children { get; set; }
+        public ICollection<DB_BudgetEvent> BudgetEvents { get; set; }
 
     }
 }
