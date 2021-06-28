@@ -57,6 +57,14 @@ namespace PocketSmith.DataExport
                 .Property(x => x.Id)
                 .ValueGeneratedNever();
 
+            modelBuilder.Entity<DB_Scenario>()
+                .Property(x => x.Id)
+                .ValueGeneratedNever();
+
+            modelBuilder.Entity<DB_BudgetEvent>()
+                .Property(x => x.Id)
+                .ValueGeneratedNever();
+
 
 
             modelBuilder.Entity<DB_Transaction>().Property(t => t.Labels)

@@ -15,6 +15,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using ObjectsComparer;
+using PocketSmith.DataExportServices.Budget;
 using PocketSmithAttachmentManager.Menus;
 
 namespace PocketSmithAttachmentManager.WebServices
@@ -30,7 +31,9 @@ namespace PocketSmithAttachmentManager.WebServices
         private AccountDataService _accountDataService;
         private CategoryDataService _categoryDataService;
         private InstitutionDataService _institutionDataService;
-        private CategoryService _categoryService;
+        private readonly CategoryService _categoryService;
+        private readonly BudgetService _budgetService;
+        private ScenarioDataService _scenarioDataService;
 
 
         public DataDownloadService(Type parentMenuType)
@@ -48,6 +51,7 @@ namespace PocketSmithAttachmentManager.WebServices
             _transactionService = new TransactionService();
             _contextFactory = new ContextFactory();
             _categoryService = new CategoryService();
+            _budgetService = new BudgetService();
         }
 
         public async Task DownloadAllData()
@@ -58,7 +62,10 @@ namespace PocketSmithAttachmentManager.WebServices
 
             var apiTransactions = await _transactionService.GetAll();
 
-            var apiCategories = await resolveCategories(apiTransactions);
+            var apiCategories = await resolveCategories(apiTransactions
+                .Select(x => x.Category)
+                .Where(x => x != null)
+                .ToList());
             
             var apiAccounts = apiTransactions
                 .Select(x => x.TransactionAccount)
@@ -95,6 +102,26 @@ namespace PocketSmithAttachmentManager.WebServices
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("All transactions downloaded successfully!");
             Console.ForegroundColor = ConsoleColor.White;
+
+            Console.WriteLine("Downloading budget events...");
+
+            var apiBudgetEvents = await _budgetService.GetAll();
+
+            var apiBudgetCategories = await resolveCategories(apiBudgetEvents
+                .Select(x => x.Category)
+                .Where(x => x != null)
+                .ToList());
+
+            var apiScenarios = apiBudgetEvents.Select(x => x.Scenario).ToList();
+
+            var budgetEventEntityCount = apiBudgetEvents.Count + apiBudgetCategories.Count + apiScenarios.Count;
+
+
+            using var budgetEventProgressBar = new ProgressBar(budgetEventEntityCount, "Adding Budget Events to Database", ConsoleColor.White);
+
+            await processCategories(apiBudgetCategories, budgetEventProgressBar);
+
+                
             Console.WriteLine("Returning to main menu...");
 
             Thread.Sleep(5000);
@@ -113,6 +140,7 @@ namespace PocketSmithAttachmentManager.WebServices
             _accountDataService = new AccountDataService(filePath);
             _categoryDataService = new CategoryDataService(filePath);
             _institutionDataService = new InstitutionDataService(filePath);
+            _scenarioDataService = new ScenarioDataService(filePath);
 
             await using var context = _contextFactory.Create(filePath);
 
@@ -142,6 +170,32 @@ namespace PocketSmithAttachmentManager.WebServices
             return true;
         }
 
+        private async Task processScenarios(List<ScenarioModel> apiScenarios, ProgressBar progressBar)
+        {
+            var dbScenarios = await _scenarioDataService.GetAll();
+
+            foreach (var scenario in apiScenarios)
+            {
+                progressBar.Tick();
+                var selectedDbScenario = dbScenarios.FirstOrDefault(x => x.Id == scenario.Id);
+
+                if (selectedDbScenario == null)
+                {
+                    var createResult = await _scenarioDataService.Create(scenario);
+                    dbScenarios.Add(createResult);
+                }
+                else
+                {
+                    var comparer = new ObjectsComparer.Comparer<ScenarioModel>();
+                    var scenariosEqual = comparer.Compare(scenario, selectedDbScenario);
+
+                    if (!scenariosEqual)
+                    {
+                        await _scenarioDataService.Update(scenario, scenario.Id);
+                    }
+                }
+            }
+        }
         private async Task processTransactionAccounts(IEnumerable<AccountModel> apiAccounts, ProgressBar progressBar)
         {
             var dbAccounts = await _accountDataService.GetAll();
@@ -296,17 +350,8 @@ namespace PocketSmithAttachmentManager.WebServices
 
         }
 
-        private async Task<IEnumerable<CategoryModel>> resolveCategories(IEnumerable<TransactionModel> transactions)
+        private async Task<List<CategoryModel>> resolveCategories(List<CategoryModel> apiCategories)
         {
-            var apiCategories = transactions
-                .Select(x => x.Category)
-                .Where(x => x != null)
-                .GroupBy(x => x.Id)
-                .Select(group => group.First())
-                .OrderBy(x => x.Id)
-                .ThenBy(x => x.ParentId)
-                .ToList();
-
             do
             {
                 List<CategoryModel> missingCategories = new List<CategoryModel>();

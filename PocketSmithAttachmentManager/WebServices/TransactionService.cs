@@ -58,7 +58,6 @@ namespace PocketSmithAttachmentManager.WebServices
                 transactions.ForEach(t => transactionList.Add(t));
 
                 progressBar.Tick();
-                //ToDo: Remove transaction count criteria.
             } while (RestClient.CurrentPageUri != RestClient.LastPageUri);
 
             progressBar.Dispose();
