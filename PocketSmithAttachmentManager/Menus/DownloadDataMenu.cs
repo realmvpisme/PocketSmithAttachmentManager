@@ -19,6 +19,7 @@ namespace PocketSmithAttachmentManager.Menus
 
     1. Download All Data
     2. Download Transactions
+    3. Download Budget Events
     3. Return To Main Menu";
 
         public static async Task Show()
@@ -38,7 +39,7 @@ namespace PocketSmithAttachmentManager.Menus
                 {
                     selectedOption = 0;
                 }
-            } while (!Enumerable.Range(1, 3).Contains(selectedOption));
+            } while (!Enumerable.Range(1, 4).Contains(selectedOption));
 
             switch (selectedOption)
             {
@@ -50,17 +51,46 @@ namespace PocketSmithAttachmentManager.Menus
 
                 case 2:
                 {
+                    await downloadTransactions();
                     break;
                 }
 
                 case 3:
                 {
+                    await downloadBudgetEvents();
+                    break;
+                }
+
+                case 4:
+                {
+                    await MainMenu.Show();
                     break;
                 }
             }
         }
 
         private static async Task downloadAllData()
+        {
+            await prepareDatabase();
+
+            await _dataDownloadService.DownloadAllData();
+
+        }
+
+        private static async Task downloadTransactions()
+        {
+            await prepareDatabase();
+            await _dataDownloadService.DownloadTransactions();
+
+        }
+
+        private static async Task downloadBudgetEvents()
+        {
+            await prepareDatabase();
+            await _dataDownloadService.DownloadBudgetEvents();
+        }
+
+        private static async Task prepareDatabase()
         {
             string databaseFilePath = null;
             do
@@ -80,9 +110,6 @@ namespace PocketSmithAttachmentManager.Menus
             }
 
             await _dataDownloadService.LoadDatabase(databaseFilePath);
-
-            await _dataDownloadService.DownloadAllData();
-
         }
 
     }

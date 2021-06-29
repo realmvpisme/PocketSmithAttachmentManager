@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace PocketSmith.DataExportServices
 {
-    public abstract class DataServiceBase<TJsonModel, TDatabaseModel>
+    public abstract class DataServiceBase<TJsonModel, TDatabaseModel, TEntityId>
     where TDatabaseModel : ModelBase
     {
         protected readonly Mapper Mapper;
@@ -72,7 +72,7 @@ namespace PocketSmith.DataExportServices
             return mappedEntities;
         }
 
-        public virtual async Task<TJsonModel> GetById(long id)
+        public virtual async Task<TJsonModel> GetById(TEntityId id)
         {
             await using var context = ContextFactory.Create(DatabaseFilePath);
 
@@ -81,7 +81,7 @@ namespace PocketSmith.DataExportServices
             return mappedEntity;
         }
 
-        public virtual async Task<bool> Exists(long id)
+        public virtual async Task<bool> Exists(TEntityId id)
         {
             await using var context = ContextFactory.Create(DatabaseFilePath);
 

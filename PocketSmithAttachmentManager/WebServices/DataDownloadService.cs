@@ -34,6 +34,7 @@ namespace PocketSmithAttachmentManager.WebServices
         private readonly CategoryService _categoryService;
         private readonly BudgetService _budgetService;
         private ScenarioDataService _scenarioDataService;
+        private BudgetEventDataService _budgetEventDataService;
 
 
         public DataDownloadService(Type parentMenuType)
@@ -54,9 +55,49 @@ namespace PocketSmithAttachmentManager.WebServices
             _budgetService = new BudgetService();
         }
 
-        public async Task DownloadAllData()
+        public async Task DownloadBudgetEvents(bool isInlineMethod = false)
         {
-            var context = _contextFactory.Create(_databaseFilePath);
+
+            Console.WriteLine("Downloading budget events...");
+
+            var apiBudgetEvents = await _budgetService.GetAll();
+
+            var apiBudgetCategories = await resolveCategories(apiBudgetEvents
+                .Select(x => x.Category)
+                .Where(x => x != null)
+                .GroupBy(x => x.Id)
+                .Select(group => group.First())
+                .OrderBy(x => x.Id)
+                .ThenBy(x => x.ParentId)
+                .ToList());
+
+            var apiScenarios = apiBudgetEvents.Select(x => x.Scenario).ToList();
+
+            var entityCount = apiBudgetEvents.Count + apiBudgetCategories.Count + apiScenarios.Count;
+
+
+            using var progressBar = new ProgressBar(entityCount, "Adding Budget Events to Database", ConsoleColor.White);
+
+            await processCategories(apiBudgetCategories, progressBar);
+            await processScenarios(apiScenarios, progressBar);
+            await processBudgetEvents(apiBudgetEvents, progressBar);
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("All budget events downloaded successfully!");
+            Console.ForegroundColor = ConsoleColor.White;
+
+            if (!isInlineMethod)
+            {
+                Console.WriteLine("Returning to main menu...");
+
+                Thread.Sleep(5000);
+
+                await MainMenu.Show();
+            }
+        }
+
+        public async Task DownloadTransactions(bool isInlineMethod = false)
+        {
 
             Console.Clear();
 
@@ -65,8 +106,12 @@ namespace PocketSmithAttachmentManager.WebServices
             var apiCategories = await resolveCategories(apiTransactions
                 .Select(x => x.Category)
                 .Where(x => x != null)
+                .GroupBy(x => x.Id)
+                .Select(group => group.First())
+                .OrderBy(x => x.Id)
+                .ThenBy(x => x.ParentId)
                 .ToList());
-            
+
             var apiAccounts = apiTransactions
                 .Select(x => x.TransactionAccount)
                 .Where(x => x != null)
@@ -103,32 +148,28 @@ namespace PocketSmithAttachmentManager.WebServices
             Console.WriteLine("All transactions downloaded successfully!");
             Console.ForegroundColor = ConsoleColor.White;
 
-            Console.WriteLine("Downloading budget events...");
+            if (!isInlineMethod)
+            {
+                Console.WriteLine("Returning to main menu...");
 
-            var apiBudgetEvents = await _budgetService.GetAll();
+                Thread.Sleep(5000);
 
-            var apiBudgetCategories = await resolveCategories(apiBudgetEvents
-                .Select(x => x.Category)
-                .Where(x => x != null)
-                .ToList());
+                await MainMenu.Show();
+            }
+        }
 
-            var apiScenarios = apiBudgetEvents.Select(x => x.Scenario).ToList();
+        public async Task DownloadAllData()
+        {
 
-            var budgetEventEntityCount = apiBudgetEvents.Count + apiBudgetCategories.Count + apiScenarios.Count;
+            await DownloadTransactions(true);
+            await DownloadBudgetEvents(true);
+          
 
-
-            using var budgetEventProgressBar = new ProgressBar(budgetEventEntityCount, "Adding Budget Events to Database", ConsoleColor.White);
-
-            await processCategories(apiBudgetCategories, budgetEventProgressBar);
-
-                
             Console.WriteLine("Returning to main menu...");
 
             Thread.Sleep(5000);
 
-            MainMenu.Show();
-
-
+            await MainMenu.Show();
 
         }
 
@@ -141,6 +182,7 @@ namespace PocketSmithAttachmentManager.WebServices
             _categoryDataService = new CategoryDataService(filePath);
             _institutionDataService = new InstitutionDataService(filePath);
             _scenarioDataService = new ScenarioDataService(filePath);
+            _budgetEventDataService  = new BudgetEventDataService(filePath);
 
             await using var context = _contextFactory.Create(filePath);
 
@@ -170,6 +212,44 @@ namespace PocketSmithAttachmentManager.WebServices
             return true;
         }
 
+        private async Task processBudgetEvents(List<BudgetEventModel> apiBudgetEvents, ProgressBar progressBar)
+        {
+            var dbBudgetEvents = await _budgetEventDataService.GetAll();
+
+            foreach (var budgetEvent in apiBudgetEvents)
+            {
+                progressBar.Tick();
+                var selectedDbBudgetEvent = dbBudgetEvents.FirstOrDefault(x => x.Id == budgetEvent.Id);
+
+                if (selectedDbBudgetEvent == null)
+                {
+                    var createResult = await _budgetEventDataService.Create(budgetEvent);
+                    dbBudgetEvents.Add(createResult);
+                }
+                else
+                {
+                    var comparer = new ObjectsComparer.Comparer<BudgetEventModel>();
+                    comparer.IgnoreMember(x => x.Name == "Scenario");
+                    comparer.IgnoreMember(x => x.Name == "Category");
+
+                    var budgetEventsEqual = comparer.Compare(budgetEvent, selectedDbBudgetEvent);
+
+                    if (!budgetEventsEqual)
+                    {
+                        await _budgetEventDataService.Update(budgetEvent, budgetEvent.Id);
+                    }
+                }
+            }
+
+            foreach (var dbBudgetEvent in dbBudgetEvents)
+            {
+                if (apiBudgetEvents.All(x => x.Id != dbBudgetEvent.Id))
+                {
+                    await _budgetEventDataService.Delete(dbBudgetEvent.Id);
+                }
+            }
+        }
+
         private async Task processScenarios(List<ScenarioModel> apiScenarios, ProgressBar progressBar)
         {
             var dbScenarios = await _scenarioDataService.GetAll();
@@ -195,7 +275,17 @@ namespace PocketSmithAttachmentManager.WebServices
                     }
                 }
             }
+
+            foreach (var dbScenario in dbScenarios)
+            {
+                if (apiScenarios.All(x => x.Id != dbScenario.Id))
+                {
+                    await _scenarioDataService.Delete(dbScenario.Id);
+                }
+            }
         }
+
+
         private async Task processTransactionAccounts(IEnumerable<AccountModel> apiAccounts, ProgressBar progressBar)
         {
             var dbAccounts = await _accountDataService.GetAll();
@@ -352,6 +442,9 @@ namespace PocketSmithAttachmentManager.WebServices
 
         private async Task<List<CategoryModel>> resolveCategories(List<CategoryModel> apiCategories)
         {
+            //The "Category" table is self referencing so there is a specific order in which categories must be inserted into the database.
+            //This method re-orders the categories to ensure that a sql exception is not thrown. 
+            Console.WriteLine("Resolving categories...");
             do
             {
                 List<CategoryModel> missingCategories = new List<CategoryModel>();
