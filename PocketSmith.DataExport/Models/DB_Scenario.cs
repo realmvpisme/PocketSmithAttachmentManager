@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace PocketSmith.DataExport.Models
 {
-    public class DB_Scenario : ModelBase
+    public class DB_Scenario : ModelBase<long>
     {
         public long AccountId { get; set; }
         public string Title { get; set; }

@@ -2,7 +2,7 @@
 
 namespace PocketSmith.DataExport.Models
 {
-    public class DB_Account : ModelBase
+    public class DB_Account : ModelBase<long>
     {
         public long AccountId { get; set; }
         public string Name { get; set; }

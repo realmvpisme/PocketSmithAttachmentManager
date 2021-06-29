@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace PocketSmith.DataExport.Models
 {
-    public class DB_Variant : ModelBase
+    public class DB_Variant : ModelBase<long>
     {
         public string ThumbUrl { get; set; }
         public string LargeUrl { get; set; }

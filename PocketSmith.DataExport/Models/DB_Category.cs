@@ -2,7 +2,7 @@
 
 namespace PocketSmith.DataExport.Models
 {
-    public class DB_Category : ModelBase
+    public class DB_Category : ModelBase<long>
     {
         public string Title { get; set; }
         public string Color { get; set; }

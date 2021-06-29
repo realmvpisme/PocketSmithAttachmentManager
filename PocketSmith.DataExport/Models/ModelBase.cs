@@ -2,9 +2,9 @@
 
 namespace PocketSmith.DataExport.Models
 {
-    public class ModelBase
+    public class ModelBase<TEntityId>
     {
-        public long Id { get; set; }
+        public TEntityId Id { get; set; }
         public DateTime CreatedTime { get; set; }
         public DateTime LastUpdated { get; set; }
     }

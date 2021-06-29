@@ -1,6 +1,6 @@
 ﻿namespace PocketSmith.DataExport.Models
 {
-    public class DB_Attachment : ModelBase
+    public class DB_Attachment : ModelBase<long>
     {
         public string Title { get; set; }
         public string FileName { get; set; }

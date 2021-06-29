@@ -2,7 +2,7 @@
 
 namespace PocketSmith.DataExport.Models
 {
-    public class DB_Transaction : ModelBase
+    public class DB_Transaction : ModelBase<long>
     {
         public string Payee { get; set; }
         public string OriginalPayee { get; set; }

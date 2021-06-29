@@ -3,8 +3,9 @@ using System.Text.Json.Serialization;
 
 namespace PocketSmith.DataExport.Models
 {
-    public class DB_BudgetEvent : ModelBase
+    public class DB_BudgetEvent : ModelBase<string>
     {
+        public new string Id { get; set; }
         public decimal? Amount { get; set; }
         public decimal? AmountInBaseCurrency { get; set; }
         public string CurrencyCode { get; set; }

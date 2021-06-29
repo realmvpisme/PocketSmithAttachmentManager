@@ -6,7 +6,7 @@ namespace PocketSmith.DataExportServices.JsonModels
     public class BudgetEventModel
     {
         [JsonPropertyName("id")]
-        public long Id { get; set; }
+        public string Id { get; set; }
         [JsonPropertyName("category")]
         public CategoryModel Category { get; set; }
         [JsonPropertyName("scenario")]
