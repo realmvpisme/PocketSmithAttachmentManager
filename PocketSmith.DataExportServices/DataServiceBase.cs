@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace PocketSmith.DataExportServices
 {
     public abstract class DataServiceBase<TJsonModel, TDatabaseModel, TEntityId>
-    where TDatabaseModel : ModelBase
+    where TDatabaseModel : ModelBase<TEntityId>
     {
         protected readonly Mapper Mapper;
         protected readonly ContextFactory ContextFactory;
@@ -37,7 +37,7 @@ namespace PocketSmith.DataExportServices
             return await GetById(createResult.Entity.Id);
         }
 
-        public virtual async Task Update(TJsonModel updateItem, long id)
+        public virtual async Task Update(TJsonModel updateItem, TEntityId id)
         {
             await using var context = ContextFactory.Create(DatabaseFilePath);
 
@@ -53,11 +53,11 @@ namespace PocketSmith.DataExportServices
             await context.SaveChangesAsync();
         }
 
-        public virtual async Task Delete(long id)
+        public virtual async Task Delete(TEntityId id)
         {
             await using var context = ContextFactory.Create(DatabaseFilePath);
 
-            var dbEntity = await context.Set<TDatabaseModel>().FirstOrDefaultAsync(x => x.Id == id);
+            var dbEntity = await context.Set<TDatabaseModel>().FindAsync((object)id);
             context.Remove(dbEntity);
             await context.SaveChangesAsync();
         }
@@ -76,7 +76,7 @@ namespace PocketSmith.DataExportServices
         {
             await using var context = ContextFactory.Create(DatabaseFilePath);
 
-            var dbEntity = await context.Set<TDatabaseModel>().FirstOrDefaultAsync(x => x.Id == id);
+            var dbEntity = await context.Set<TDatabaseModel>().FirstOrDefaultAsync(x => x.Id.Equals(id));
             var mappedEntity = Mapper.Map<TJsonModel>(dbEntity);
             return mappedEntity;
         }
@@ -85,7 +85,7 @@ namespace PocketSmith.DataExportServices
         {
             await using var context = ContextFactory.Create(DatabaseFilePath);
 
-            return await context.Set<TDatabaseModel>().AnyAsync(x => x.Id == id);
+            return await context.Set<TDatabaseModel>().AnyAsync(x => x.Id.Equals(id));
         }
     }
 }

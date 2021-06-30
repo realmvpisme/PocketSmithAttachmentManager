@@ -20,7 +20,7 @@ namespace PocketSmithAttachmentManager.Menus
     1. Download All Data
     2. Download Transactions
     3. Download Budget Events
-    3. Return To Main Menu";
+    4. Return To Main Menu";
 
         public static async Task Show()
         {

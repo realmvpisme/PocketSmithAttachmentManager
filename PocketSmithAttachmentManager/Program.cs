@@ -8,7 +8,7 @@ namespace PocketSmithAttachmentManager
     {
         static async Task Main(string[] args)
         {
-            Console.Title = "PocketSmith Attachment Manager v1.0";
+            Console.Title = "PocketSmith Attachment Manager v2.0";
 
             await MainMenu.Show();
         }

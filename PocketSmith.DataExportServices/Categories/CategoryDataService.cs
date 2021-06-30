@@ -7,7 +7,7 @@ using PocketSmith.DataExportServices.JsonModels;
 
 namespace PocketSmith.DataExportServices.Categories
 {
-    public class CategoryDataService : DataServiceBase<CategoryModel, DB_Category>
+    public class CategoryDataService : DataServiceBase<CategoryModel, DB_Category, long>
     {
         public CategoryDataService(string databaseFilePath) : base(databaseFilePath)
         {
