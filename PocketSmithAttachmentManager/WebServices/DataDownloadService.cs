@@ -1,10 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PocketSmith.DataExport;
 using PocketSmith.DataExportServices.Accounts;
+using PocketSmith.DataExportServices.Budget;
 using PocketSmith.DataExportServices.Categories;
 using PocketSmith.DataExportServices.Institutions;
 using PocketSmith.DataExportServices.JsonModels;
 using PocketSmith.DataExportServices.Transactions;
+using PocketSmithAttachmentManager.Menus;
 using ShellProgressBar;
 using System;
 using System.Collections.Generic;
@@ -14,9 +16,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using ObjectsComparer;
-using PocketSmith.DataExportServices.Budget;
-using PocketSmithAttachmentManager.Menus;
+using PocketSmith.DataExportServices;
 
 namespace PocketSmithAttachmentManager.WebServices
 {
@@ -35,7 +35,6 @@ namespace PocketSmithAttachmentManager.WebServices
         private readonly BudgetService _budgetService;
         private ScenarioDataService _scenarioDataService;
         private BudgetEventDataService _budgetEventDataService;
-
 
         public DataDownloadService(Type parentMenuType)
         {
@@ -57,7 +56,6 @@ namespace PocketSmithAttachmentManager.WebServices
 
         public async Task DownloadBudgetEvents(bool isInlineMethod = false)
         {
-
             Console.WriteLine("Downloading budget events...");
 
             var apiBudgetEvents = await _budgetService.GetAll();
@@ -74,7 +72,6 @@ namespace PocketSmithAttachmentManager.WebServices
             var apiScenarios = apiBudgetEvents.Select(x => x.Scenario).ToList();
 
             var entityCount = apiBudgetEvents.Count + apiBudgetCategories.Count + apiScenarios.Count;
-
 
             using var progressBar = new ProgressBar(entityCount, "Adding Budget Events to Database", ConsoleColor.White);
 
@@ -98,7 +95,6 @@ namespace PocketSmithAttachmentManager.WebServices
 
         public async Task DownloadTransactions(bool isInlineMethod = false)
         {
-
             Console.Clear();
 
             var apiTransactions = await _transactionService.GetAll();
@@ -128,10 +124,8 @@ namespace PocketSmithAttachmentManager.WebServices
                 .Select(group => group.First())
                 .ToList();
 
-
             var entityCount = apiTransactions.Count() + apiCategories.Count() + apiInstitutions.Count() +
                               apiAccounts.Count();
-
 
             using var progressBar = new ProgressBar(entityCount, "Adding Transactions to Database", ConsoleColor.White);
 
@@ -160,29 +154,21 @@ namespace PocketSmithAttachmentManager.WebServices
 
         public async Task DownloadAllData()
         {
-
             await DownloadTransactions(true);
             await DownloadBudgetEvents(true);
-          
 
             Console.WriteLine("Returning to main menu...");
 
             Thread.Sleep(5000);
 
             await MainMenu.Show();
-
         }
 
         public async Task<bool> LoadDatabase(string filePath)
         {
             _databaseFilePath = filePath;
 
-            _transactionDataService = new TransactionDataService(filePath);
-            _accountDataService = new AccountDataService(filePath);
-            _categoryDataService = new CategoryDataService(filePath);
-            _institutionDataService = new InstitutionDataService(filePath);
-            _scenarioDataService = new ScenarioDataService(filePath);
-            _budgetEventDataService  = new BudgetEventDataService(filePath);
+           
 
             await using var context = _contextFactory.Create(filePath);
 
@@ -201,13 +187,21 @@ namespace PocketSmithAttachmentManager.WebServices
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Database file failed to load.");
-                Console.ForegroundColor = ConsoleColor.White;
-                return false;
+                Console.ForegroundColor = ConsoleColor.White; 
+                Environment.Exit((int)ExitCodes.InvalidDatabase);
             }
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Database file loaded successfully.");
             Console.ForegroundColor = ConsoleColor.White;
+
+            //Create service is database file was found.
+            _transactionDataService = new TransactionDataService(filePath);
+            _accountDataService = new AccountDataService(filePath);
+            _categoryDataService = new CategoryDataService(filePath);
+            _institutionDataService = new InstitutionDataService(filePath);
+            _scenarioDataService = new ScenarioDataService(filePath);
+            _budgetEventDataService = new BudgetEventDataService(filePath);
 
             return true;
         }
@@ -267,6 +261,7 @@ namespace PocketSmithAttachmentManager.WebServices
                 else
                 {
                     var comparer = new ObjectsComparer.Comparer<ScenarioModel>();
+                    comparer.IgnoreMember(x => x.Name == "BudgetEvents");
                     var scenariosEqual = comparer.Compare(scenario, selectedDbScenario);
 
                     if (!scenariosEqual)
@@ -285,11 +280,9 @@ namespace PocketSmithAttachmentManager.WebServices
             }
         }
 
-
         private async Task processTransactionAccounts(IEnumerable<AccountModel> apiAccounts, ProgressBar progressBar)
         {
             var dbAccounts = await _accountDataService.GetAll();
-
 
             foreach (var account in apiAccounts)
             {
@@ -321,7 +314,6 @@ namespace PocketSmithAttachmentManager.WebServices
                     await _accountDataService.Delete(dbAccount.Id);
                 }
             }
-            
         }
 
         private async Task processCategories(IEnumerable<CategoryModel> apiCategories, ProgressBar progressBar)
@@ -339,9 +331,9 @@ namespace PocketSmithAttachmentManager.WebServices
                 }
                 else
                 {
-
                     var comparer = new ObjectsComparer.Comparer<CategoryModel>();
                     comparer.IgnoreMember(x => x.Name == "Children");
+                    comparer.IgnoreMember(x => x.Name == "BudgetEvents");
                     var categoriesEqual = comparer.Compare(category, selectedDbCategory);
 
                     if (!categoriesEqual)
@@ -349,14 +341,13 @@ namespace PocketSmithAttachmentManager.WebServices
                         await _categoryDataService.Update(category, category.Id);
                     }
                 }
-
             }
 
             //Delete categories that don't exist in the API.
             foreach (var dbCategory in dbCategories)
             {
                 if (!apiCategories.Any(x => x.Id == dbCategory.Id) && !apiCategories.SelectMany(x => x.Children).Any(y => y.Id == dbCategory.Id))
-                { 
+                {
                     await _categoryDataService.Delete(dbCategory.Id);
                 }
             }
@@ -398,7 +389,6 @@ namespace PocketSmithAttachmentManager.WebServices
 
         private async Task processTransactions(IEnumerable<TransactionModel> apiTransactions, ProgressBar progressBar)
         {
-
             var dbTransactions = await _transactionDataService.GetAll();
 
             Console.WriteLine("Creating new database transactions...");
@@ -411,8 +401,8 @@ namespace PocketSmithAttachmentManager.WebServices
                 var selectedDbTransaction = dbTransactions.FirstOrDefault(x => x.Id == apiTransaction.Id);
                 if (selectedDbTransaction == null)
                 {
-                   var createResult = await _transactionDataService.Create(apiTransaction);
-                   dbTransactions.Add(createResult);
+                    var createResult = await _transactionDataService.Create(apiTransaction);
+                    dbTransactions.Add(createResult);
                 }
                 else
                 {
@@ -434,16 +424,15 @@ namespace PocketSmithAttachmentManager.WebServices
             {
                 if (!apiTransactions.Any(x => x.Id.Equals(dbTransaction.Id)))
                 {
-                   await _transactionDataService.Delete(dbTransaction.Id);
+                    await _transactionDataService.Delete(dbTransaction.Id);
                 }
             }
-
         }
 
         private async Task<List<CategoryModel>> resolveCategories(List<CategoryModel> apiCategories)
         {
             //The "Category" table is self referencing so there is a specific order in which categories must be inserted into the database.
-            //This method re-orders the categories to ensure that a sql exception is not thrown. 
+            //This method re-orders the categories to ensure that a sql exception is not thrown.
             Console.WriteLine("Resolving categories...");
             do
             {
@@ -482,6 +471,5 @@ namespace PocketSmithAttachmentManager.WebServices
 
             return returnCategories;
         }
-
     }
 }

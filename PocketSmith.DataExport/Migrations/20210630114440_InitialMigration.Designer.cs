@@ -9,8 +9,8 @@ using PocketSmith.DataExport;
 namespace PocketSmith.DataExport.Migrations
 {
     [DbContext(typeof(PocketSmithDbContext))]
-    [Migration("20210628120102_AddBudgetEvents")]
-    partial class AddBudgetEvents
+    [Migration("20210630114440_InitialMigration")]
+    partial class InitialMigration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -132,8 +132,8 @@ namespace PocketSmith.DataExport.Migrations
 
             modelBuilder.Entity("PocketSmith.DataExport.Models.DB_BudgetEvent", b =>
                 {
-                    b.Property<long>("Id")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Id")
+                        .HasColumnType("TEXT");
 
                     b.Property<decimal?>("Amount")
                         .HasColumnType("TEXT");

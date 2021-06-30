@@ -130,8 +130,8 @@ namespace PocketSmith.DataExport.Migrations
 
             modelBuilder.Entity("PocketSmith.DataExport.Models.DB_BudgetEvent", b =>
                 {
-                    b.Property<long>("Id")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Id")
+                        .HasColumnType("TEXT");
 
                     b.Property<decimal?>("Amount")
                         .HasColumnType("TEXT");

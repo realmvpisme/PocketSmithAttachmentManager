@@ -47,10 +47,20 @@ namespace PocketSmithAttachmentManager.WebServices
 
                 if (TotalPages == 0)
                 {
-                    TotalPages = Convert.ToInt32(Regex.Match(LastPageUri, "(?<=\\?page=)\\d+").Value);
+                    TotalPages = Convert.ToInt32(Regex.IsMatch(LastPageUri, "(?<=\\?page=)\\d+") ? 
+                        Regex.Match(LastPageUri, "(?<=\\?page=)\\d+").Value : 
+                        Regex.Match(LastPageUri, "(?<=\\&page=)\\d+").Value);
                 }
 
-                var currentPageNumberString = Regex.Match(CurrentPageUri, "(?<=\\?page=)\\d+").Value;
+                string currentPageNumberString = null;
+                if (Regex.IsMatch(CurrentPageUri, "(?<=\\?page=)\\d+"))
+                {
+                    currentPageNumberString = Regex.Match(CurrentPageUri, "(?<=\\?page=)\\d+").Value;
+                }
+                else
+                {
+                    currentPageNumberString = Regex.Match(CurrentPageUri, "(?<=\\&page=)\\d+").Value;
+                }
 
                 CurrentPageNumber = !string.IsNullOrEmpty(currentPageNumberString) ? Convert.ToInt32(currentPageNumberString) : 1;
             }
