@@ -344,13 +344,14 @@ namespace PocketSmithAttachmentManager.WebServices
             }
 
             //Delete categories that don't exist in the API.
-            foreach (var dbCategory in dbCategories)
-            {
-                if (!apiCategories.Any(x => x.Id == dbCategory.Id) && !apiCategories.SelectMany(x => x.Children).Any(y => y.Id == dbCategory.Id))
-                {
-                    await _categoryDataService.Delete(dbCategory.Id);
-                }
-            }
+            //ToDo: Query all API categories before deleting. 
+            //foreach (var dbCategory in dbCategories)
+            //{
+            //    if (!apiCategories.Any(x => x.Id == dbCategory.Id) && !apiCategories.SelectMany(x => x.Children).Any(y => y.Id == dbCategory.Id))
+            //    {
+            //        await _categoryDataService.Delete(dbCategory.Id);
+            //    }
+            //}
         }
 
         private async Task processInstitutions(IEnumerable<InstitutionModel> apiInstitutions, ProgressBar progressBar)

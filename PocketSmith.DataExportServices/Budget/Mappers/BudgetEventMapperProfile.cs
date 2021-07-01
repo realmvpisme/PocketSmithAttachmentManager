@@ -16,6 +16,22 @@ namespace PocketSmith.DataExportServices.Budget.Mappers
                 .ForMember(dest => dest.ScenarioId, map =>
                 {
                     map.MapFrom(src => src.Scenario.Id);
+                })
+                .ForMember(dest => dest.CreatedTime, map =>
+                {
+                    map.MapFrom(src => src.Scenario.CreatedAt);
+                })
+                .ForMember(dest => dest.LastUpdated, map =>
+                {
+                    map.MapFrom(src => src.Scenario.UpdatedAt);
+                })
+                .ForMember(dest => dest.Category, map =>
+                {
+                    map.Ignore();
+                })
+                .ForMember(dest => dest.Scenario, map =>
+                {
+                    map.Ignore();
                 }).ReverseMap();
         }
     }
