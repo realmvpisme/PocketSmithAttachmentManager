@@ -280,7 +280,7 @@ namespace PocketSmithAttachmentManager.WebServices
             }
         }
 
-        private async Task processTransactionAccounts(IEnumerable<AccountModel> apiAccounts, ProgressBar progressBar)
+        private async Task processTransactionAccounts(IEnumerable<TransactionAccountModel> apiAccounts, ProgressBar progressBar)
         {
             var dbAccounts = await _accountDataService.GetAll();
 
@@ -296,7 +296,7 @@ namespace PocketSmithAttachmentManager.WebServices
                 }
                 else
                 {
-                    var comparer = new ObjectsComparer.Comparer<AccountModel>();
+                    var comparer = new ObjectsComparer.Comparer<TransactionAccountModel>();
                     comparer.IgnoreMember(x => x.Name == "Institution");
                     var accountsEqual = comparer.Compare(account, selectedDbAccount);
 

@@ -30,5 +30,8 @@
 
         public const string BUDGET_EVENTS_BY_DATE =
             "https://api.pocketsmith.com/v2/users/{userId}/events?per_page=100&start_date={startDate}&end_date={endDate}";
+
+        public const string INSTITUTIONS_ALL = "https://api.pocketsmith.com/v2/users/{userId}/institutions";
+        public const string INSTITUTION_BY_ID = "https://api.pocketsmith.com/v2/institutions/{id}";
     }
 }

@@ -8,7 +8,7 @@ namespace PocketSmith.DataExportServices.Accounts.Mappers
     {
         public AccountMapperProfile()
         {
-            CreateMap<AccountModel, DB_Account>()
+            CreateMap<TransactionAccountModel, DB_TransactionAccount>()
                 .ForMember(dest => dest.InstitutionId, map =>
                 {
                     map.MapFrom(src => src.Institution.Id);

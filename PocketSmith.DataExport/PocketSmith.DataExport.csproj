@@ -5,6 +5,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Migrations\20210706120745_AddAccountBalances.cs" />
+    <Compile Remove="Migrations\20210706120745_AddAccountBalances.Designer.cs" />
+    <Compile Remove="Migrations\20210706121031_RenameAccountsTable.cs" />
+    <Compile Remove="Migrations\20210706121031_RenameAccountsTable.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.15" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.15">
       <PrivateAssets>all</PrivateAssets>

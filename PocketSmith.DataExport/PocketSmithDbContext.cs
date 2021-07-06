@@ -14,7 +14,7 @@ namespace PocketSmith.DataExport
         {
         }
 
-        public DbSet<DB_Account> Accounts { get; set; }
+        public DbSet<DB_TransactionAccount> Accounts { get; set; }
         public DbSet<DB_Attachment> Attachments { get; set; }
         public DbSet<DB_Category> Categories { get; set; }
         public DbSet<DB_ContentTypeMeta> ContentTypeMetas { get; set; }
@@ -26,7 +26,7 @@ namespace PocketSmith.DataExport
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<DB_Account>().ToTable("Accounts");
+            modelBuilder.Entity<DB_TransactionAccount>().ToTable("TransactionAccounts");
             modelBuilder.Entity<DB_Attachment>().ToTable("Attachments");
             modelBuilder.Entity<DB_Category>().ToTable("Categories");
             modelBuilder.Entity<DB_ContentTypeMeta>().ToTable("ContentTypeMetas");
@@ -35,9 +35,11 @@ namespace PocketSmith.DataExport
             modelBuilder.Entity<DB_Variant>().ToTable("Variants");
             modelBuilder.Entity<DB_BudgetEvent>().ToTable("BudgetEvents");
             modelBuilder.Entity<DB_Scenario>().ToTable("Scenarios");
+            //modelBuilder.Entity<DB_Account>().ToTable("Accounts");
+            //modelBuilder.Entity<DB_AccountBalance>().ToTable("AccountBalances");
 
 
-            modelBuilder.Entity<DB_Account>()
+            modelBuilder.Entity<DB_TransactionAccount>()
                 .Property(x => x.Id)
                 .ValueGeneratedNever();
 
@@ -65,6 +67,9 @@ namespace PocketSmith.DataExport
                 .Property(x => x.Id)
                 .ValueGeneratedNever();
 
+            //modelBuilder.Entity<DB_Account>()
+            //    .Property(x => x.Id)
+            //    .ValueGeneratedNever();
 
 
             modelBuilder.Entity<DB_Transaction>().Property(t => t.Labels)
