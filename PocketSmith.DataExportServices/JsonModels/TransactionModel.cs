@@ -40,7 +40,7 @@ namespace PocketSmith.DataExportServices.JsonModels
         [JsonPropertyName("labels")]
         public string [] Labels { get; set; }
         [JsonPropertyName("transaction_account")]
-        public AccountModel TransactionAccount { get; set; }
+        public TransactionAccountModel TransactionAccount { get; set; }
         [JsonPropertyName("created_at")]
         public string CreatedAt { get; set; }
         [JsonPropertyName("updated_at")]
