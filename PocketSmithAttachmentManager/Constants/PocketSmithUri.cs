@@ -33,5 +33,9 @@
 
         public const string INSTITUTIONS_ALL = "https://api.pocketsmith.com/v2/users/{userId}/institutions";
         public const string INSTITUTION_BY_ID = "https://api.pocketsmith.com/v2/institutions/{id}";
+        public const string TRANSACTION_ACCOUNTS_ALL = "https://api.pocketsmith.com/v2/users/{userId}/transaction_accounts";
+        public const string TRANSACTION_ACCOUNT_BY_ID = "https://api.pocketsmith.com/v2/transaction_accounts/{id}";
+        public const string ACCOUNTS_ALL = "https://api.pocketsmith.com/v2/users/{userId}/accounts";
+        public const string ACCOUNT_BY_ID = "https://api.pocketsmith.com/v2/accounts/{id}";
     }
 }

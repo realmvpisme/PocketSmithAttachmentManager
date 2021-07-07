@@ -14,6 +14,7 @@ using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using PocketSmith.DataExportServices;
@@ -23,10 +24,8 @@ namespace PocketSmithAttachmentManager.WebServices
     public class DataDownloadService
     {
         private readonly HttpClient _httpClient;
-        private readonly Type _parentMenuType;
         private readonly TransactionService _transactionService;
         private readonly ContextFactory _contextFactory;
-        private string _databaseFilePath;
         private TransactionDataService _transactionDataService;
         private AccountDataService _accountDataService;
         private CategoryDataService _categoryDataService;
@@ -35,8 +34,11 @@ namespace PocketSmithAttachmentManager.WebServices
         private readonly BudgetService _budgetService;
         private ScenarioDataService _scenarioDataService;
         private BudgetEventDataService _budgetEventDataService;
+        private TransactionAccountService _transactionAccountService;
+        private TransactionAccountDataService _transactionAccountDataService;
+        private AccountService _accountService;
 
-        public DataDownloadService(Type parentMenuType)
+        public DataDownloadService()
         {
             _httpClient = new HttpClient();
             _httpClient
@@ -46,12 +48,22 @@ namespace PocketSmithAttachmentManager.WebServices
                 .DefaultRequestHeaders
                 .Add("Accept", "application/json");
 
-            _parentMenuType = parentMenuType;
 
             _transactionService = new TransactionService();
             _contextFactory = new ContextFactory();
             _categoryService = new CategoryService();
             _budgetService = new BudgetService();
+            _accountService = new AccountService();
+            _transactionAccountService = new TransactionAccountService();
+        }
+
+        public async Task DownloadAccounts(bool isInlineMethod = false)
+        {
+            Console.WriteLine("Downloading Accounts..");
+
+            var apiAccounts = await _accountService.GetAll();
+
+            var apiTransactionAccounts = await _transactionAccountService.GetAll();
         }
 
         public async Task DownloadBudgetEvents(bool isInlineMethod = false)
@@ -166,10 +178,6 @@ namespace PocketSmithAttachmentManager.WebServices
 
         public async Task<bool> LoadDatabase(string filePath)
         {
-            _databaseFilePath = filePath;
-
-           
-
             await using var context = _contextFactory.Create(filePath);
 
             bool fileExists = File.Exists(filePath);
@@ -282,7 +290,7 @@ namespace PocketSmithAttachmentManager.WebServices
 
         private async Task processTransactionAccounts(IEnumerable<TransactionAccountModel> apiAccounts, ProgressBar progressBar)
         {
-            var dbAccounts = await _accountDataService.GetAll();
+            var dbAccounts = await _transactionAccountDataService.GetAll();
 
             foreach (var account in apiAccounts)
             {
@@ -291,7 +299,7 @@ namespace PocketSmithAttachmentManager.WebServices
 
                 if (selectedDbAccount == null)
                 {
-                    var createResult = await _accountDataService.Create(account);
+                    var createResult = await _transactionAccountDataService.Create(account);
                     dbAccounts.Add(createResult);
                 }
                 else
@@ -302,7 +310,7 @@ namespace PocketSmithAttachmentManager.WebServices
 
                     if (!accountsEqual)
                     {
-                        await _accountDataService.Update(account, account.Id);
+                        await _transactionAccountDataService.Update(account, account.Id);
                     }
                 }
             }
