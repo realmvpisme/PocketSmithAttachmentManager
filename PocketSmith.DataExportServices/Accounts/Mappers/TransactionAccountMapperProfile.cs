@@ -4,15 +4,11 @@ using PocketSmith.DataExportServices.JsonModels;
 
 namespace PocketSmith.DataExportServices.Accounts.Mappers
 {
-    public class AccountMapperProfile : Profile
+    public class TransactionAccountMapperProfile : Profile
     {
-        public AccountMapperProfile()
+        public TransactionAccountMapperProfile()
         {
-            CreateMap<TransactionAccountModel, DB_TransactionAccount>()
-                .ForMember(dest => dest.InstitutionId, map =>
-                {
-                    map.MapFrom(src => src.Institution.Id);
-                })
+            CreateMap<AccountModel, DB_Account>()
                 .ForMember(dest => dest.CreatedTime, map =>
                 {
                     map.MapFrom(src => src.CreatedAt);
@@ -20,11 +16,7 @@ namespace PocketSmith.DataExportServices.Accounts.Mappers
                 .ForMember(dest => dest.LastUpdated, map =>
                 {
                     map.MapFrom(src => src.UpdatedAt);
-                })
-                .ForMember(dest => dest.Institution, map => map.Ignore())
-                .ReverseMap();
-
-            
+                }).ReverseMap();
         }
     }
 }

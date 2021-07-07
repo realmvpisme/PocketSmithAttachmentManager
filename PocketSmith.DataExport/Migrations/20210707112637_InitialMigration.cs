@@ -115,7 +115,7 @@ namespace PocketSmith.DataExport.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Accounts",
+                name: "TransactionAccounts",
                 columns: table => new
                 {
                     Id = table.Column<long>(nullable: false),
@@ -139,9 +139,9 @@ namespace PocketSmith.DataExport.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Accounts", x => x.Id);
+                    table.PrimaryKey("PK_TransactionAccounts", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Accounts_Institutions_InstitutionId",
+                        name: "FK_TransactionAccounts_Institutions_InstitutionId",
                         column: x => x.InstitutionId,
                         principalTable: "Institutions",
                         principalColumn: "Id",
@@ -217,9 +217,9 @@ namespace PocketSmith.DataExport.Migrations
                 {
                     table.PrimaryKey("PK_Transactions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Transactions_Accounts_AccountId",
+                        name: "FK_Transactions_TransactionAccounts_AccountId",
                         column: x => x.AccountId,
-                        principalTable: "Accounts",
+                        principalTable: "TransactionAccounts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
@@ -271,11 +271,6 @@ namespace PocketSmith.DataExport.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Accounts_InstitutionId",
-                table: "Accounts",
-                column: "InstitutionId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Attachments_ContentTypeMetaId",
                 table: "Attachments",
                 column: "ContentTypeMetaId");
@@ -304,6 +299,11 @@ namespace PocketSmith.DataExport.Migrations
                 name: "IX_Categories_ParentId",
                 table: "Categories",
                 column: "ParentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionAccounts_InstitutionId",
+                table: "TransactionAccounts",
+                column: "InstitutionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Transactions_AccountId",
@@ -337,7 +337,7 @@ namespace PocketSmith.DataExport.Migrations
                 name: "Scenarios");
 
             migrationBuilder.DropTable(
-                name: "Accounts");
+                name: "TransactionAccounts");
 
             migrationBuilder.DropTable(
                 name: "Categories");
