@@ -64,6 +64,34 @@ namespace PocketSmithAttachmentManager.WebServices
             var apiAccounts = await _accountService.GetAll();
 
             var apiTransactionAccounts = await _transactionAccountService.GetAll();
+
+            var entityCount = apiAccounts.Count + apiTransactionAccounts.Count;
+
+            var progressBarOptions = new ProgressBarOptions()
+            {
+                CollapseWhenFinished = true,
+                ForegroundColor = ConsoleColor.White
+            };
+
+            using var progressBar = new ProgressBar(entityCount, "Adding Accounts to Database", progressBarOptions);
+
+            await processAccounts(apiAccounts, progressBar);
+            await processTransactionAccounts(apiTransactionAccounts, progressBar);
+
+            progressBar.Dispose();
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("All accounts downloaded successfully!");
+            Console.ForegroundColor = ConsoleColor.White;
+
+            if (!isInlineMethod)
+            {
+                Console.WriteLine("Returning to main menu...");
+
+                Thread.Sleep(5000);
+
+                await MainMenu.Show();
+            }
         }
 
         public async Task DownloadBudgetEvents(bool isInlineMethod = false)
@@ -85,11 +113,18 @@ namespace PocketSmithAttachmentManager.WebServices
 
             var entityCount = apiBudgetEvents.Count + apiBudgetCategories.Count + apiScenarios.Count;
 
-            using var progressBar = new ProgressBar(entityCount, "Adding Budget Events to Database", ConsoleColor.White);
+            var progressBarOptions = new ProgressBarOptions()
+            {
+                CollapseWhenFinished = true,
+                ForegroundColor = ConsoleColor.White
+            };
+
+            using var progressBar = new ProgressBar(entityCount, "Adding Budget Events to Database", progressBarOptions);
 
             await processCategories(apiBudgetCategories, progressBar);
             await processScenarios(apiScenarios, progressBar);
             await processBudgetEvents(apiBudgetEvents, progressBar);
+
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("All budget events downloaded successfully!");
@@ -138,8 +173,12 @@ namespace PocketSmithAttachmentManager.WebServices
 
             var entityCount = apiTransactions.Count() + apiCategories.Count() + apiInstitutions.Count() +
                               apiAccounts.Count();
-
-            using var progressBar = new ProgressBar(entityCount, "Adding Transactions to Database", ConsoleColor.White);
+            var progressBarOptions = new ProgressBarOptions()
+            {
+                CollapseWhenFinished = true,
+                ForegroundColor = ConsoleColor.White
+            };
+            using var progressBar = new ProgressBar(entityCount, "Adding Transactions to Database", progressBarOptions);
 
             await processCategories(apiCategories, progressBar);
             await processInstitutions(apiInstitutions, progressBar);
@@ -166,6 +205,7 @@ namespace PocketSmithAttachmentManager.WebServices
 
         public async Task DownloadAllData()
         {
+            await DownloadAccounts(true);
             await DownloadTransactions(true);
             await DownloadBudgetEvents(true);
 
@@ -214,7 +254,47 @@ namespace PocketSmithAttachmentManager.WebServices
             return true;
         }
 
-        private async Task processBudgetEvents(List<BudgetEventModel> apiBudgetEvents, ProgressBar progressBar)
+
+        private async Task processAccounts(List<AccountModel> apiAccounts, ProgressBar progressBar)
+        {
+            var dbAccounts = await _accountDataService.GetAll();
+
+            foreach (var account in apiAccounts)
+            {
+                progressBar.Tick();
+                var selectedDbAccount = dbAccounts.FirstOrDefault(x => x.Id == account.Id);
+
+                if (selectedDbAccount == null)
+                {
+                    var createResult = await _accountDataService.Create(account);
+                    dbAccounts.Add(createResult);
+                }
+                else
+                {
+                    var comparer = new ObjectsComparer.Comparer<AccountModel>();
+                    comparer.IgnoreMember(x => x.Name == "Scenarios");
+                    comparer.IgnoreMember(x => x.Name == "TransactionAccounts");
+                    comparer.IgnoreMember(x => x.Name == "PrimaryScenario");
+                    comparer.IgnoreMember(x => x.Name == "PrimaryTransactionAccount");
+
+                    var accountsEqual = comparer.Compare(account, selectedDbAccount);
+
+                    if (!accountsEqual)
+                    {
+                        await _accountDataService.Update(account, account.Id);
+                    }
+                }
+            }
+
+            foreach (var dbAccount in dbAccounts)
+            {
+                if (apiAccounts.All(x => x.Id != dbAccount.Id))
+                {
+                    await _accountDataService.Delete(dbAccount.Id);
+                }
+            }
+        }
+        private async Task processBudgetEvents(IEnumerable<BudgetEventModel> apiBudgetEvents, ProgressBar progressBar)
         {
             var dbBudgetEvents = await _budgetEventDataService.GetAll();
 

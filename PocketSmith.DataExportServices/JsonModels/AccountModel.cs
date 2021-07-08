@@ -28,7 +28,7 @@ namespace PocketSmith.DataExportServices.JsonModels
         [JsonPropertyName("type")]
         public string Type { get; set; }
         [JsonPropertyName("is_net_worth")]
-        public string IsNetWorth { get; set; }
+        public bool? IsNetWorth { get; set; }
         [JsonPropertyName("primary_transaction_account")]
         public TransactionAccountModel PrimaryTransactionAccount { get; set; }
         [JsonPropertyName("primary_scenario")]

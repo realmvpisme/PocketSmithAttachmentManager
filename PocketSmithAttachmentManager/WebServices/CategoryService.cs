@@ -10,7 +10,7 @@ namespace PocketSmithAttachmentManager.WebServices
 {
     public class CategoryService : WebServiceBase<CategoryModel, long>
     {
-        public CategoryService() : base(PocketSmithUri.TRANSACTIONS)
+        public CategoryService() : base(PocketSmithUri.TRANSACTIONS, EntityType.TRANSACTIONS)
         {
 
         }

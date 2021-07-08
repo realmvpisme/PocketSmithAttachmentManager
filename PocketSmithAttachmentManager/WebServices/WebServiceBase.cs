@@ -46,7 +46,13 @@ namespace PocketSmithAttachmentManager.WebServices
 
             apiEntities.ForEach(x => apiEntityList.Add(x));
 
-            using var progressBar = new ProgressBar(RestClient.TotalPages, "Downloading Transactions", ConsoleColor.White);
+            var progressBarOptions = new ProgressBarOptions()
+            {
+                CollapseWhenFinished = true,
+                ForegroundColor = ConsoleColor.White
+            };
+
+            using var progressBar = new ProgressBar(RestClient.TotalPages, $"Downloading {_entityType}...", progressBarOptions);
 
             progressBar.Tick();
 
@@ -70,7 +76,6 @@ namespace PocketSmithAttachmentManager.WebServices
                 progressBar.Tick();
             } while (RestClient.CurrentPageUri != RestClient.LastPageUri);
 
-            progressBar.Dispose();
 
             return apiEntityList;
         }
