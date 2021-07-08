@@ -12,7 +12,7 @@ namespace PocketSmithAttachmentManager.Menus
 
         static DownloadDataMenu()
         {
-            _dataDownloadService = new DataDownloadService(typeof(DownloadDataMenu));
+            _dataDownloadService = new DataDownloadService();
         }
         public static string MenuText = @"
         *****Download Data*****

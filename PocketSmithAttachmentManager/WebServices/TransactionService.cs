@@ -15,7 +15,7 @@ namespace PocketSmithAttachmentManager.WebServices
     public class TransactionService : WebServiceBase<TransactionModel, long>
     {
 
-        public TransactionService() : base(PocketSmithUri.TRANSACTION_SEARCH)
+        public TransactionService() : base(PocketSmithUri.TRANSACTION_SEARCH, EntityType.CATEGORIES)
         {
 
         }

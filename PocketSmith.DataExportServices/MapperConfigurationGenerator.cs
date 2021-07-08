@@ -19,7 +19,7 @@ namespace PocketSmith.DataExportServices
                cfg.AddProfile(new InstitutionMapperProfile());
                cfg.AddProfile(new ScenarioMapperProfile());
                cfg.AddProfile(new BudgetEventMapperProfile());
-               cfg.AddProfile(new TransactionAccountMapperProfile());
+               cfg.AddProfile(new AccountMapperProfile());
             });
         }
     }

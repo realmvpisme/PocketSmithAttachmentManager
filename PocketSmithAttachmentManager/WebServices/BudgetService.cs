@@ -12,7 +12,7 @@ namespace PocketSmithAttachmentManager.WebServices
 {
     public class BudgetService : WebServiceBase<BudgetEventModel, long>
     {
-        public BudgetService() : base(PocketSmithUri.BASE_URI)
+        public BudgetService() : base(PocketSmithUri.BASE_URI, EntityType.BUDGET_EVENTS)
         {
 
         }

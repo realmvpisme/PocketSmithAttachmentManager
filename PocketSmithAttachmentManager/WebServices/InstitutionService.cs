@@ -11,7 +11,7 @@ namespace PocketSmithAttachmentManager.WebServices
 {
     public class InstitutionService : WebServiceBase<InstitutionModel, long>
     {
-        public InstitutionService() : base(PocketSmithUri.INSTITUTIONS_ALL)
+        public InstitutionService() : base(PocketSmithUri.INSTITUTIONS_ALL, EntityType.INSTITUTIONS)
         {
         }
 
