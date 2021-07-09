@@ -66,6 +66,39 @@ namespace PocketSmith.DataExport.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Variants",
+                columns: table => new
+                {
+                    Id = table.Column<long>(nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    CreatedTime = table.Column<DateTime>(nullable: false),
+                    LastUpdated = table.Column<DateTime>(nullable: false),
+                    ThumbUrl = table.Column<string>(nullable: true),
+                    LargeUrl = table.Column<string>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Variants", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AccountBalances",
+                columns: table => new
+                {
+                    Id = table.Column<long>(nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    CreatedTime = table.Column<DateTime>(nullable: false),
+                    LastUpdated = table.Column<DateTime>(nullable: false),
+                    Date = table.Column<DateTime>(nullable: false),
+                    Balance = table.Column<decimal>(nullable: false),
+                    AccountId = table.Column<long>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AccountBalances", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Scenarios",
                 columns: table => new
                 {
@@ -91,61 +124,12 @@ namespace PocketSmith.DataExport.Migrations
                     CurrentBalanceExchangeRate = table.Column<string>(nullable: true),
                     CurrentBalanceDate = table.Column<DateTime>(nullable: true),
                     SafeBalance = table.Column<decimal>(nullable: true),
-                    SafeBalanceInBaseCurrency = table.Column<decimal>(nullable: true)
+                    SafeBalanceInBaseCurrency = table.Column<decimal>(nullable: true),
+                    DB_AccountId = table.Column<long>(nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Scenarios", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Variants",
-                columns: table => new
-                {
-                    Id = table.Column<long>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    CreatedTime = table.Column<DateTime>(nullable: false),
-                    LastUpdated = table.Column<DateTime>(nullable: false),
-                    ThumbUrl = table.Column<string>(nullable: true),
-                    LargeUrl = table.Column<string>(nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Variants", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TransactionAccounts",
-                columns: table => new
-                {
-                    Id = table.Column<long>(nullable: false),
-                    CreatedTime = table.Column<DateTime>(nullable: false),
-                    LastUpdated = table.Column<DateTime>(nullable: false),
-                    AccountId = table.Column<long>(nullable: false),
-                    Name = table.Column<string>(nullable: true),
-                    Number = table.Column<string>(nullable: true),
-                    Type = table.Column<string>(nullable: true),
-                    IsNetWorth = table.Column<bool>(nullable: true),
-                    CurrencyCode = table.Column<string>(nullable: true),
-                    CurrentBalance = table.Column<decimal>(nullable: false),
-                    CurrentBalanceInBaseCurrency = table.Column<decimal>(nullable: false),
-                    CurrentBalanceExchangeRate = table.Column<string>(nullable: true),
-                    CurrentBalanceDate = table.Column<DateTime>(nullable: false),
-                    SafeBalance = table.Column<decimal>(nullable: true),
-                    SafeBalanceInBaseCurrency = table.Column<decimal>(nullable: true),
-                    StartingBalance = table.Column<decimal>(nullable: true),
-                    StartingBalanceDate = table.Column<DateTime>(nullable: false),
-                    InstitutionId = table.Column<long>(nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TransactionAccounts", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_TransactionAccounts_Institutions_InstitutionId",
-                        column: x => x.InstitutionId,
-                        principalTable: "Institutions",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -182,6 +166,78 @@ namespace PocketSmith.DataExport.Migrations
                         name: "FK_BudgetEvents_Scenarios_ScenarioId",
                         column: x => x.ScenarioId,
                         principalTable: "Scenarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TransactionAccounts",
+                columns: table => new
+                {
+                    Id = table.Column<long>(nullable: false),
+                    CreatedTime = table.Column<DateTime>(nullable: false),
+                    LastUpdated = table.Column<DateTime>(nullable: false),
+                    AccountId = table.Column<long>(nullable: false),
+                    Name = table.Column<string>(nullable: true),
+                    Number = table.Column<string>(nullable: true),
+                    Type = table.Column<string>(nullable: true),
+                    IsNetWorth = table.Column<bool>(nullable: true),
+                    CurrencyCode = table.Column<string>(nullable: true),
+                    CurrentBalance = table.Column<decimal>(nullable: false),
+                    CurrentBalanceInBaseCurrency = table.Column<decimal>(nullable: false),
+                    CurrentBalanceExchangeRate = table.Column<string>(nullable: true),
+                    CurrentBalanceDate = table.Column<DateTime>(nullable: false),
+                    SafeBalance = table.Column<decimal>(nullable: true),
+                    SafeBalanceInBaseCurrency = table.Column<decimal>(nullable: true),
+                    StartingBalance = table.Column<decimal>(nullable: true),
+                    StartingBalanceDate = table.Column<DateTime>(nullable: false),
+                    InstitutionId = table.Column<long>(nullable: true),
+                    DB_AccountId = table.Column<long>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TransactionAccounts", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TransactionAccounts_Institutions_InstitutionId",
+                        column: x => x.InstitutionId,
+                        principalTable: "Institutions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Accounts",
+                columns: table => new
+                {
+                    Id = table.Column<long>(nullable: false),
+                    CreatedTime = table.Column<DateTime>(nullable: false),
+                    LastUpdated = table.Column<DateTime>(nullable: false),
+                    Title = table.Column<string>(nullable: true),
+                    CurrencyCode = table.Column<string>(nullable: true),
+                    CurrentBalance = table.Column<decimal>(nullable: false),
+                    CurrentBalanceInBaseCurrency = table.Column<decimal>(nullable: false),
+                    CurrentBalanceExchangeRate = table.Column<decimal>(nullable: true),
+                    CurrentBalanceDate = table.Column<DateTime>(nullable: true),
+                    SafeBalance = table.Column<decimal>(nullable: true),
+                    SafeBalanceInBaseCurrency = table.Column<decimal>(nullable: true),
+                    Type = table.Column<string>(nullable: true),
+                    IsNetWorth = table.Column<string>(nullable: true),
+                    PrimaryTransactionAccountId = table.Column<long>(nullable: false),
+                    PrimaryScenarioId = table.Column<long>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Accounts", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Accounts_Scenarios_PrimaryScenarioId",
+                        column: x => x.PrimaryScenarioId,
+                        principalTable: "Scenarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Accounts_TransactionAccounts_PrimaryTransactionAccountId",
+                        column: x => x.PrimaryTransactionAccountId,
+                        principalTable: "TransactionAccounts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -271,6 +327,21 @@ namespace PocketSmith.DataExport.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_AccountBalances_AccountId",
+                table: "AccountBalances",
+                column: "AccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Accounts_PrimaryScenarioId",
+                table: "Accounts",
+                column: "PrimaryScenarioId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Accounts_PrimaryTransactionAccountId",
+                table: "Accounts",
+                column: "PrimaryTransactionAccountId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Attachments_ContentTypeMetaId",
                 table: "Attachments",
                 column: "ContentTypeMetaId");
@@ -301,6 +372,16 @@ namespace PocketSmith.DataExport.Migrations
                 column: "ParentId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Scenarios_DB_AccountId",
+                table: "Scenarios",
+                column: "DB_AccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionAccounts_DB_AccountId",
+                table: "TransactionAccounts",
+                column: "DB_AccountId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TransactionAccounts_InstitutionId",
                 table: "TransactionAccounts",
                 column: "InstitutionId");
@@ -314,10 +395,45 @@ namespace PocketSmith.DataExport.Migrations
                 name: "IX_Transactions_CategoryId",
                 table: "Transactions",
                 column: "CategoryId");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_AccountBalances_Accounts_AccountId",
+                table: "AccountBalances",
+                column: "AccountId",
+                principalTable: "Accounts",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Scenarios_Accounts_DB_AccountId",
+                table: "Scenarios",
+                column: "DB_AccountId",
+                principalTable: "Accounts",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_TransactionAccounts_Accounts_DB_AccountId",
+                table: "TransactionAccounts",
+                column: "DB_AccountId",
+                principalTable: "Accounts",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropForeignKey(
+                name: "FK_Scenarios_Accounts_DB_AccountId",
+                table: "Scenarios");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_TransactionAccounts_Accounts_DB_AccountId",
+                table: "TransactionAccounts");
+
+            migrationBuilder.DropTable(
+                name: "AccountBalances");
+
             migrationBuilder.DropTable(
                 name: "Attachments");
 
@@ -334,13 +450,16 @@ namespace PocketSmith.DataExport.Migrations
                 name: "Variants");
 
             migrationBuilder.DropTable(
+                name: "Categories");
+
+            migrationBuilder.DropTable(
+                name: "Accounts");
+
+            migrationBuilder.DropTable(
                 name: "Scenarios");
 
             migrationBuilder.DropTable(
                 name: "TransactionAccounts");
-
-            migrationBuilder.DropTable(
-                name: "Categories");
 
             migrationBuilder.DropTable(
                 name: "Institutions");

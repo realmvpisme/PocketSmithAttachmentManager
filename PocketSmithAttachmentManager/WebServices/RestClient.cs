@@ -39,17 +39,40 @@ namespace PocketSmithAttachmentManager.WebServices
 
             try
             {
-                var links = httpResponse.Headers.GetValues("Link").FirstOrDefault();
+                string links;
+                try
+                {
+                    links = httpResponse.Headers.GetValues("Link").FirstOrDefault();
 
-                FirstPageUri = Regex.Match(links, "(?<=<)[^<]+(?=>;\\srel=\\\"first\\\")").Value;
-                NextPageUri = Regex.Match(links, "(?<=<)[^<]+(?=>;\\srel=\\\"next\\\")").Value;
-                LastPageUri = Regex.Match(links, "(?<=<)[^<]+(?=>;\\srel=\\\"last\\\")").Value;
+                }
+                catch (Exception e)
+                {
+                    links = null;
+                }
 
-                if (TotalPages == 0)
+
+                if (links != null)
+                {
+                    FirstPageUri = Regex.Match(links, "(?<=<)[^<]+(?=>;\\srel=\\\"first\\\")").Value;
+                    NextPageUri = Regex.Match(links, "(?<=<)[^<]+(?=>;\\srel=\\\"next\\\")").Value;
+                    LastPageUri = Regex.Match(links, "(?<=<)[^<]+(?=>;\\srel=\\\"last\\\")").Value;
+                }
+                else
+                {
+                    FirstPageUri = uri;
+                    CurrentPageUri = uri;
+                    LastPageUri = uri;
+                }
+
+                if (TotalPages == 0 && links != null)
                 {
                     TotalPages = Convert.ToInt32(Regex.IsMatch(LastPageUri, "(?<=\\?page=)\\d+") ? 
                         Regex.Match(LastPageUri, "(?<=\\?page=)\\d+").Value : 
                         Regex.Match(LastPageUri, "(?<=\\&page=)\\d+").Value);
+                }
+                else
+                {
+                    TotalPages = 1;
                 }
 
                 string currentPageNumberString = null;
@@ -61,14 +84,10 @@ namespace PocketSmithAttachmentManager.WebServices
                 {
                     currentPageNumberString = Regex.Match(CurrentPageUri, "(?<=\\&page=)\\d+").Value;
                 }
-
                 CurrentPageNumber = !string.IsNullOrEmpty(currentPageNumberString) ? Convert.ToInt32(currentPageNumberString) : 1;
             }
             catch (Exception e)
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("No additional pages were found \n");
-                Console.ForegroundColor = ConsoleColor.White;
             }
 
             return await httpResponse.Content.ReadAsStringAsync();
