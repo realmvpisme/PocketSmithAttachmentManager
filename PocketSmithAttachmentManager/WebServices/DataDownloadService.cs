@@ -14,6 +14,7 @@ using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,9 +35,10 @@ namespace PocketSmithAttachmentManager.WebServices
         private readonly BudgetService _budgetService;
         private ScenarioDataService _scenarioDataService;
         private BudgetEventDataService _budgetEventDataService;
-        private TransactionAccountService _transactionAccountService;
+        private readonly TransactionAccountService _transactionAccountService;
         private TransactionAccountDataService _transactionAccountDataService;
-        private AccountService _accountService;
+        private readonly AccountService _accountService;
+        private AccountBalanceDataService _accountBalanceDataService;
 
         public DataDownloadService()
         {
@@ -59,7 +61,6 @@ namespace PocketSmithAttachmentManager.WebServices
 
         public async Task DownloadAccounts(bool isInlineMethod = false)
         {
-            Console.WriteLine("Downloading Accounts..");
 
             var apiAccounts = await _accountService.GetAll();
 
@@ -96,8 +97,6 @@ namespace PocketSmithAttachmentManager.WebServices
 
         public async Task DownloadBudgetEvents(bool isInlineMethod = false)
         {
-            Console.WriteLine("Downloading budget events...");
-
             var apiBudgetEvents = await _budgetService.GetAll();
 
             var apiBudgetCategories = await resolveCategories(apiBudgetEvents
@@ -243,13 +242,14 @@ namespace PocketSmithAttachmentManager.WebServices
             Console.WriteLine("Database file loaded successfully.");
             Console.ForegroundColor = ConsoleColor.White;
 
-            //Create service is database file was found.
+            //Create service if database file was found.
             _transactionDataService = new TransactionDataService(filePath);
             _accountDataService = new AccountDataService(filePath);
             _categoryDataService = new CategoryDataService(filePath);
             _institutionDataService = new InstitutionDataService(filePath);
             _scenarioDataService = new ScenarioDataService(filePath);
             _budgetEventDataService = new BudgetEventDataService(filePath);
+            _accountBalanceDataService = new AccountBalanceDataService(filePath);
 
             return true;
         }
@@ -268,6 +268,7 @@ namespace PocketSmithAttachmentManager.WebServices
                 {
                     var createResult = await _accountDataService.Create(account);
                     dbAccounts.Add(createResult);
+
                 }
                 else
                 {
@@ -284,6 +285,17 @@ namespace PocketSmithAttachmentManager.WebServices
                         await _accountDataService.Update(account, account.Id);
                     }
                 }
+
+                //Add Account Balance
+
+                var accountBalance = new AccountBalanceModel()
+                {
+                    AccountId = account.Id,
+                    Balance = account.CurrentBalance,
+                    Date = (DateTime)account.CurrentBalanceDate
+                };
+
+                await _accountBalanceDataService.Create(accountBalance);
             }
 
             foreach (var dbAccount in dbAccounts)

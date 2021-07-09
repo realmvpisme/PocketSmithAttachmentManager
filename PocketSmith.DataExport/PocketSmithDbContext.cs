@@ -14,7 +14,8 @@ namespace PocketSmith.DataExport
         {
         }
 
-        public DbSet<DB_TransactionAccount> Accounts { get; set; }
+        public DbSet<DB_TransactionAccount> TransactionAccounts { get; set; }
+        public DbSet<DB_Account> Accounts { get; set; }
         public DbSet<DB_Attachment> Attachments { get; set; }
         public DbSet<DB_Category> Categories { get; set; }
         public DbSet<DB_ContentTypeMeta> ContentTypeMetas { get; set; }
@@ -23,6 +24,7 @@ namespace PocketSmith.DataExport
         public DbSet<DB_Variant> Variants { get; set; }
         public DbSet<DB_BudgetEvent> BudgetEvents { get; set; }
         public DbSet<DB_Scenario> Scenarios { get; set; }
+        public DbSet<DB_AccountBalance> AccountBalances { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -35,8 +37,8 @@ namespace PocketSmith.DataExport
             modelBuilder.Entity<DB_Variant>().ToTable("Variants");
             modelBuilder.Entity<DB_BudgetEvent>().ToTable("BudgetEvents");
             modelBuilder.Entity<DB_Scenario>().ToTable("Scenarios");
-            //modelBuilder.Entity<DB_Account>().ToTable("Accounts");
-            //modelBuilder.Entity<DB_AccountBalance>().ToTable("AccountBalances");
+            modelBuilder.Entity<DB_Account>().ToTable("Accounts");
+            modelBuilder.Entity<DB_AccountBalance>().ToTable("AccountBalances");
 
 
             modelBuilder.Entity<DB_TransactionAccount>()
@@ -67,10 +69,10 @@ namespace PocketSmith.DataExport
                 .Property(x => x.Id)
                 .ValueGeneratedNever();
 
-            //modelBuilder.Entity<DB_Account>()
-            //    .Property(x => x.Id)
-            //    .ValueGeneratedNever();
-
+            modelBuilder.Entity<DB_Account>()
+                .Property(x => x.Id)
+                .ValueGeneratedNever();
+            
 
             modelBuilder.Entity<DB_Transaction>().Property(t => t.Labels)
                 .HasConversion(l => JsonSerializer.Serialize(l, default), 
