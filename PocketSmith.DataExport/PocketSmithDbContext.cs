@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Security.Cryptography.X509Certificates;
+using Microsoft.EntityFrameworkCore;
 using PocketSmith.DataExport.Models;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -72,7 +73,31 @@ namespace PocketSmith.DataExport
             modelBuilder.Entity<DB_Account>()
                 .Property(x => x.Id)
                 .ValueGeneratedNever();
-            
+
+            modelBuilder.Entity<DB_Account>()
+                .HasOne(x => x.PrimaryScenario)
+                .WithOne()
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DB_Scenario>()
+                .HasOne(x => x.Account)
+                .WithMany(y => y.Scenarios)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DB_Account>()
+                .HasOne(x => x.PrimaryTransactionAccount)
+                .WithOne()
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DB_TransactionAccount>()
+                .HasOne(x => x.Account)
+                .WithMany()
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<DB_AccountBalance>()
+                .HasOne(x => x.Account)
+                .WithMany(x => x.AccountBalances)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<DB_Transaction>().Property(t => t.Labels)
                 .HasConversion(l => JsonSerializer.Serialize(l, default), 

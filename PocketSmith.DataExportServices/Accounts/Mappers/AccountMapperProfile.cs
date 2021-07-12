@@ -32,6 +32,14 @@ namespace PocketSmith.DataExportServices.Accounts.Mappers
                 .ForMember(dest => dest.PrimaryTransactionAccount, map =>
                 {
                     map.Ignore();
+                })
+                .ForMember(dest => dest.Scenarios, map =>
+                {
+                    map.Ignore();
+                })
+                .ForMember(dest => dest.TransactionAccounts, map =>
+                {
+                    map.Ignore();
                 }).ReverseMap();
         }
     }

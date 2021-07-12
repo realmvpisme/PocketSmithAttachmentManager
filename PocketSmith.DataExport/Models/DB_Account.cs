@@ -16,12 +16,13 @@ namespace PocketSmith.DataExport.Models
         public string Type { get; set; }
         public string IsNetWorth { get; set; }
 
-        public long PrimaryTransactionAccountId { get; set; }
+        public long? PrimaryTransactionAccountId { get; set; }
         public DB_TransactionAccount PrimaryTransactionAccount { get; set; }
-        public long PrimaryScenarioId { get; set; }
+        public long? PrimaryScenarioId { get; set; }
         public DB_Scenario PrimaryScenario { get; set; }
         public ICollection<DB_TransactionAccount> TransactionAccounts { get; set; }
         public ICollection<DB_Scenario> Scenarios { get; set; }
+        public ICollection<DB_AccountBalance> AccountBalances { get; set; }
 
     }
 }

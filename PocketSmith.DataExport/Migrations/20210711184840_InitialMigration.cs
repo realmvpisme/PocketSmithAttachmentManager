@@ -105,7 +105,7 @@ namespace PocketSmith.DataExport.Migrations
                     Id = table.Column<long>(nullable: false),
                     CreatedTime = table.Column<DateTime>(nullable: false),
                     LastUpdated = table.Column<DateTime>(nullable: false),
-                    AccountId = table.Column<long>(nullable: false),
+                    AccountId = table.Column<long>(nullable: true),
                     Title = table.Column<string>(nullable: true),
                     Description = table.Column<string>(nullable: true),
                     InterestRate = table.Column<decimal>(nullable: true),
@@ -124,8 +124,7 @@ namespace PocketSmith.DataExport.Migrations
                     CurrentBalanceExchangeRate = table.Column<string>(nullable: true),
                     CurrentBalanceDate = table.Column<DateTime>(nullable: true),
                     SafeBalance = table.Column<decimal>(nullable: true),
-                    SafeBalanceInBaseCurrency = table.Column<decimal>(nullable: true),
-                    DB_AccountId = table.Column<long>(nullable: true)
+                    SafeBalanceInBaseCurrency = table.Column<decimal>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -177,7 +176,7 @@ namespace PocketSmith.DataExport.Migrations
                     Id = table.Column<long>(nullable: false),
                     CreatedTime = table.Column<DateTime>(nullable: false),
                     LastUpdated = table.Column<DateTime>(nullable: false),
-                    AccountId = table.Column<long>(nullable: false),
+                    AccountId = table.Column<long>(nullable: true),
                     Name = table.Column<string>(nullable: true),
                     Number = table.Column<string>(nullable: true),
                     Type = table.Column<string>(nullable: true),
@@ -222,8 +221,8 @@ namespace PocketSmith.DataExport.Migrations
                     SafeBalanceInBaseCurrency = table.Column<decimal>(nullable: true),
                     Type = table.Column<string>(nullable: true),
                     IsNetWorth = table.Column<string>(nullable: true),
-                    PrimaryTransactionAccountId = table.Column<long>(nullable: false),
-                    PrimaryScenarioId = table.Column<long>(nullable: false)
+                    PrimaryTransactionAccountId = table.Column<long>(nullable: true),
+                    PrimaryScenarioId = table.Column<long>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -233,13 +232,13 @@ namespace PocketSmith.DataExport.Migrations
                         column: x => x.PrimaryScenarioId,
                         principalTable: "Scenarios",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Accounts_TransactionAccounts_PrimaryTransactionAccountId",
                         column: x => x.PrimaryTransactionAccountId,
                         principalTable: "TransactionAccounts",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -334,12 +333,14 @@ namespace PocketSmith.DataExport.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_PrimaryScenarioId",
                 table: "Accounts",
-                column: "PrimaryScenarioId");
+                column: "PrimaryScenarioId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_PrimaryTransactionAccountId",
                 table: "Accounts",
-                column: "PrimaryTransactionAccountId");
+                column: "PrimaryTransactionAccountId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Attachments_ContentTypeMetaId",
@@ -372,9 +373,14 @@ namespace PocketSmith.DataExport.Migrations
                 column: "ParentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Scenarios_DB_AccountId",
+                name: "IX_Scenarios_AccountId",
                 table: "Scenarios",
-                column: "DB_AccountId");
+                column: "AccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionAccounts_AccountId",
+                table: "TransactionAccounts",
+                column: "AccountId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TransactionAccounts_DB_AccountId",
@@ -402,12 +408,20 @@ namespace PocketSmith.DataExport.Migrations
                 column: "AccountId",
                 principalTable: "Accounts",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
-                name: "FK_Scenarios_Accounts_DB_AccountId",
+                name: "FK_Scenarios_Accounts_AccountId",
                 table: "Scenarios",
-                column: "DB_AccountId",
+                column: "AccountId",
+                principalTable: "Accounts",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_TransactionAccounts_Accounts_AccountId",
+                table: "TransactionAccounts",
+                column: "AccountId",
                 principalTable: "Accounts",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Restrict);
@@ -424,8 +438,12 @@ namespace PocketSmith.DataExport.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
-                name: "FK_Scenarios_Accounts_DB_AccountId",
+                name: "FK_Scenarios_Accounts_AccountId",
                 table: "Scenarios");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_TransactionAccounts_Accounts_AccountId",
+                table: "TransactionAccounts");
 
             migrationBuilder.DropForeignKey(
                 name: "FK_TransactionAccounts_Accounts_DB_AccountId",
