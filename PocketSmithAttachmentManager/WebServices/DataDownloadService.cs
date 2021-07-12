@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PocketSmith.DataExport;
+using PocketSmith.DataExportServices;
 using PocketSmith.DataExportServices.Accounts;
 using PocketSmith.DataExportServices.Budget;
 using PocketSmith.DataExportServices.Categories;
@@ -14,11 +15,8 @@ using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Security.AccessControl;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using PocketSmith.DataExportServices;
 
 namespace PocketSmithAttachmentManager.WebServices
 {
@@ -66,7 +64,13 @@ namespace PocketSmithAttachmentManager.WebServices
 
             var apiTransactionAccounts = await _transactionAccountService.GetAll();
 
-            var entityCount = apiAccounts.Count + apiTransactionAccounts.Count;
+            var apiScenarios = apiAccounts.Select(x => x.PrimaryScenario).ToList();
+
+            var apiInstitutions = apiTransactionAccounts.Select(x => x.Institution).ToList();
+
+
+
+            var entityCount = apiAccounts.Count + apiTransactionAccounts.Count + apiScenarios.Count + apiInstitutions.Count;
 
             var progressBarOptions = new ProgressBarOptions()
             {
@@ -76,8 +80,12 @@ namespace PocketSmithAttachmentManager.WebServices
 
             using var progressBar = new ProgressBar(entityCount, "Adding Accounts to Database", progressBarOptions);
 
+            await processInstitutions(apiInstitutions, progressBar);
             await processAccounts(apiAccounts, progressBar);
             await processTransactionAccounts(apiTransactionAccounts, progressBar);
+            await processScenarios(apiScenarios, progressBar);
+
+
 
             progressBar.Dispose();
 
@@ -250,6 +258,7 @@ namespace PocketSmithAttachmentManager.WebServices
             _scenarioDataService = new ScenarioDataService(filePath);
             _budgetEventDataService = new BudgetEventDataService(filePath);
             _accountBalanceDataService = new AccountBalanceDataService(filePath);
+            _transactionAccountDataService = new TransactionAccountDataService(filePath);
 
             return true;
         }
@@ -261,6 +270,15 @@ namespace PocketSmithAttachmentManager.WebServices
 
             foreach (var account in apiAccounts)
             {
+                if (!await _transactionAccountDataService.Exists(account.PrimaryTransactionAccount.Id))
+                {
+                    account.PrimaryTransactionAccount = null;
+                }
+                //Prevents circular dependency between accounts and scenarios.
+                if (!await _scenarioDataService.Exists(Convert.ToInt64(account.PrimaryScenario.Id)))
+                {
+                    account.PrimaryScenario = null;
+                }
                 progressBar.Tick();
                 var selectedDbAccount = dbAccounts.FirstOrDefault(x => x.Id == account.Id);
 
@@ -287,7 +305,6 @@ namespace PocketSmithAttachmentManager.WebServices
                 }
 
                 //Add Account Balance
-
                 var accountBalance = new AccountBalanceModel()
                 {
                     AccountId = account.Id,
@@ -298,13 +315,6 @@ namespace PocketSmithAttachmentManager.WebServices
                 await _accountBalanceDataService.Create(accountBalance);
             }
 
-            foreach (var dbAccount in dbAccounts)
-            {
-                if (apiAccounts.All(x => x.Id != dbAccount.Id))
-                {
-                    await _accountDataService.Delete(dbAccount.Id);
-                }
-            }
         }
         private async Task processBudgetEvents(IEnumerable<BudgetEventModel> apiBudgetEvents, ProgressBar progressBar)
         {
@@ -335,21 +345,21 @@ namespace PocketSmithAttachmentManager.WebServices
                 }
             }
 
-            foreach (var dbBudgetEvent in dbBudgetEvents)
-            {
-                if (apiBudgetEvents.All(x => x.Id != dbBudgetEvent.Id))
-                {
-                    await _budgetEventDataService.Delete(dbBudgetEvent.Id);
-                }
-            }
         }
 
         private async Task processScenarios(List<ScenarioModel> apiScenarios, ProgressBar progressBar)
         {
             var dbScenarios = await _scenarioDataService.GetAll();
 
+
             foreach (var scenario in apiScenarios)
             {
+                //Prevents circular dependency between accounts and scenarios.
+                if (!await _accountDataService.Exists(Convert.ToInt64(scenario.AccountId)))
+                {
+                    scenario.AccountId = null;
+                }
+                
                 progressBar.Tick();
                 var selectedDbScenario = dbScenarios.FirstOrDefault(x => x.Id == scenario.Id);
 
@@ -370,14 +380,6 @@ namespace PocketSmithAttachmentManager.WebServices
                     }
                 }
             }
-
-            foreach (var dbScenario in dbScenarios)
-            {
-                if (apiScenarios.All(x => x.Id != dbScenario.Id))
-                {
-                    await _scenarioDataService.Delete(dbScenario.Id);
-                }
-            }
         }
 
         private async Task processTransactionAccounts(IEnumerable<TransactionAccountModel> apiAccounts, ProgressBar progressBar)
@@ -386,6 +388,10 @@ namespace PocketSmithAttachmentManager.WebServices
 
             foreach (var account in apiAccounts)
             {
+                if (!await _accountDataService.Exists(Convert.ToInt64(account.AccountId)))
+                {
+                    account.AccountId = null;
+                }
                 progressBar.Tick();
                 var selectedDbAccount = dbAccounts.FirstOrDefault(x => x.Id == account.Id);
 
@@ -404,14 +410,6 @@ namespace PocketSmithAttachmentManager.WebServices
                     {
                         await _transactionAccountDataService.Update(account, account.Id);
                     }
-                }
-            }
-
-            foreach (var dbAccount in dbAccounts)
-            {
-                if (!apiAccounts.Any(x => x.Id == dbAccount.Id))
-                {
-                    await _accountDataService.Delete(dbAccount.Id);
                 }
             }
         }
@@ -442,16 +440,6 @@ namespace PocketSmithAttachmentManager.WebServices
                     }
                 }
             }
-
-            //Delete categories that don't exist in the API.
-            //ToDo: Query all API categories before deleting. 
-            //foreach (var dbCategory in dbCategories)
-            //{
-            //    if (!apiCategories.Any(x => x.Id == dbCategory.Id) && !apiCategories.SelectMany(x => x.Children).Any(y => y.Id == dbCategory.Id))
-            //    {
-            //        await _categoryDataService.Delete(dbCategory.Id);
-            //    }
-            //}
         }
 
         private async Task processInstitutions(IEnumerable<InstitutionModel> apiInstitutions, ProgressBar progressBar)
@@ -476,14 +464,6 @@ namespace PocketSmithAttachmentManager.WebServices
                     {
                         await _institutionDataService.Update(institution, institution.Id);
                     }
-                }
-            }
-
-            foreach (var dbInstitution in dbInstitutions)
-            {
-                if (!apiInstitutions.Any(x => x.Id == dbInstitution.Id))
-                {
-                    await _institutionDataService.Delete(dbInstitution.Id);
                 }
             }
         }

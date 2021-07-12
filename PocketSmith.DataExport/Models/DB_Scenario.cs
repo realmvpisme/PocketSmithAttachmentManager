@@ -5,7 +5,8 @@ namespace PocketSmith.DataExport.Models
 {
     public class DB_Scenario : ModelBase<long>
     {
-        public long AccountId { get; set; }
+        public long? AccountId { get; set; }
+        public DB_Account Account { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
         public decimal? InterestRate { get; set; }

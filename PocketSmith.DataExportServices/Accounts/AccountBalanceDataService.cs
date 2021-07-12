@@ -16,6 +16,8 @@ namespace PocketSmith.DataExportServices.Accounts
         public AccountBalanceDataService(string databaseFilePath)
         {
             _databaseFilePath = databaseFilePath;
+            _contextFactory = new ContextFactory();
+            _mapper = new Mapper(MapperConfigurationGenerator.Invoke());
         }
 
         public async Task<AccountBalanceModel> Create(AccountBalanceModel createItem)

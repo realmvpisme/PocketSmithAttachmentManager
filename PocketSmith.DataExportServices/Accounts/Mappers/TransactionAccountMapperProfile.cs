@@ -1,5 +1,4 @@
-﻿using System.Xml;
-using AutoMapper;
+﻿using AutoMapper;
 using PocketSmith.DataExport.Models;
 using PocketSmith.DataExportServices.JsonModels;
 

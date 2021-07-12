@@ -4,7 +4,8 @@ namespace PocketSmith.DataExport.Models
 {
     public class DB_TransactionAccount : ModelBase<long>
     {
-        public long AccountId { get; set; }
+        public long? AccountId { get; set; } 
+        public DB_Account Account { get; set; }
         public string Name { get; set; }
         public string Number { get; set; }
         public string Type { get; set; }

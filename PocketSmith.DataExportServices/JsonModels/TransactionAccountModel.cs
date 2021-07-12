@@ -8,7 +8,7 @@ namespace PocketSmith.DataExportServices.JsonModels
         [JsonPropertyName("id")]
         public long Id { get; set; }
         [JsonPropertyName("account_id")]
-        public long AccountId { get; set; }
+        public long? AccountId { get; set; }
         [JsonPropertyName("name")]
         public string Name { get; set; }
         [JsonPropertyName("number")]

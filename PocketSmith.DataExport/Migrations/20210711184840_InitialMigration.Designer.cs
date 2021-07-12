@@ -9,7 +9,7 @@ using PocketSmith.DataExport;
 namespace PocketSmith.DataExport.Migrations
 {
     [DbContext(typeof(PocketSmithDbContext))]
-    [Migration("20210709114310_InitialMigration")]
+    [Migration("20210711184840_InitialMigration")]
     partial class InitialMigration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -47,10 +47,10 @@ namespace PocketSmith.DataExport.Migrations
                     b.Property<DateTime>("LastUpdated")
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("PrimaryScenarioId")
+                    b.Property<long?>("PrimaryScenarioId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long>("PrimaryTransactionAccountId")
+                    b.Property<long?>("PrimaryTransactionAccountId")
                         .HasColumnType("INTEGER");
 
                     b.Property<decimal?>("SafeBalance")
@@ -67,9 +67,11 @@ namespace PocketSmith.DataExport.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PrimaryScenarioId");
+                    b.HasIndex("PrimaryScenarioId")
+                        .IsUnique();
 
-                    b.HasIndex("PrimaryTransactionAccountId");
+                    b.HasIndex("PrimaryTransactionAccountId")
+                        .IsUnique();
 
                     b.ToTable("Accounts");
                 });
@@ -302,7 +304,7 @@ namespace PocketSmith.DataExport.Migrations
                     b.Property<long>("Id")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long>("AccountId")
+                    b.Property<long?>("AccountId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("AchieveDate")
@@ -328,9 +330,6 @@ namespace PocketSmith.DataExport.Migrations
 
                     b.Property<decimal?>("CurrentBalanceInBaseCurrency")
                         .HasColumnType("TEXT");
-
-                    b.Property<long?>("DB_AccountId")
-                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
@@ -373,7 +372,7 @@ namespace PocketSmith.DataExport.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DB_AccountId");
+                    b.HasIndex("AccountId");
 
                     b.ToTable("Scenarios");
                 });
@@ -460,7 +459,7 @@ namespace PocketSmith.DataExport.Migrations
                     b.Property<long>("Id")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long>("AccountId")
+                    b.Property<long?>("AccountId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedTime")
@@ -516,6 +515,8 @@ namespace PocketSmith.DataExport.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AccountId");
+
                     b.HasIndex("DB_AccountId");
 
                     b.HasIndex("InstitutionId");
@@ -549,24 +550,22 @@ namespace PocketSmith.DataExport.Migrations
             modelBuilder.Entity("PocketSmith.DataExport.Models.DB_Account", b =>
                 {
                     b.HasOne("PocketSmith.DataExport.Models.DB_Scenario", "PrimaryScenario")
-                        .WithMany()
-                        .HasForeignKey("PrimaryScenarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithOne()
+                        .HasForeignKey("PocketSmith.DataExport.Models.DB_Account", "PrimaryScenarioId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("PocketSmith.DataExport.Models.DB_TransactionAccount", "PrimaryTransactionAccount")
-                        .WithMany()
-                        .HasForeignKey("PrimaryTransactionAccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithOne()
+                        .HasForeignKey("PocketSmith.DataExport.Models.DB_Account", "PrimaryTransactionAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("PocketSmith.DataExport.Models.DB_AccountBalance", b =>
                 {
                     b.HasOne("PocketSmith.DataExport.Models.DB_Account", "Account")
-                        .WithMany()
+                        .WithMany("AccountBalances")
                         .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -609,9 +608,10 @@ namespace PocketSmith.DataExport.Migrations
 
             modelBuilder.Entity("PocketSmith.DataExport.Models.DB_Scenario", b =>
                 {
-                    b.HasOne("PocketSmith.DataExport.Models.DB_Account", null)
+                    b.HasOne("PocketSmith.DataExport.Models.DB_Account", "Account")
                         .WithMany("Scenarios")
-                        .HasForeignKey("DB_AccountId");
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("PocketSmith.DataExport.Models.DB_Transaction", b =>
@@ -627,6 +627,11 @@ namespace PocketSmith.DataExport.Migrations
 
             modelBuilder.Entity("PocketSmith.DataExport.Models.DB_TransactionAccount", b =>
                 {
+                    b.HasOne("PocketSmith.DataExport.Models.DB_Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("PocketSmith.DataExport.Models.DB_Account", null)
                         .WithMany("TransactionAccounts")
                         .HasForeignKey("DB_AccountId");
