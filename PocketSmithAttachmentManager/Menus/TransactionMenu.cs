@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
-using PocketSmithAttachmentManager.Models;
-using PocketSmithAttachmentManager.Services;
-using PocketSmithAttachmentManager.Services.Extensions;
+using PocketSmith.DataExportServices.JsonModels;
+using PocketSmithAttachmentManager.WebServices;
+using PocketSmithAttachmentManager.WebServices.Extensions;
 
 namespace PocketSmithAttachmentManager.Menus
 {
@@ -50,24 +49,23 @@ namespace PocketSmithAttachmentManager.Menus
             switch (selectedOption)
             {
                 case 1:
-                {
-                    break;
-                }
+                    {
+                        Console.WriteLine("This function is not yet implemented.");
+                        break;
+                    }
 
                 case 2:
-                {
-
-                    break;
-                }
+                    {
+                        Console.WriteLine("This function is not yet implemented.");
+                        break;
+                    }
 
                 case 3:
-                {
-                    await MainMenu.Show();
-                    break;
-                }
+                    {
+                        await MainMenu.Show();
+                        break;
+                    }
             }
-
-
         }
 
         public static async Task<TransactionModel> GetTransactionByAmount()
@@ -94,7 +92,7 @@ namespace PocketSmithAttachmentManager.Menus
                 }
             } while (transactionAmount <= 0.00m);
 
-            var transactions = await _transactionService.GetTransactionsByAmount(transactionAmount);
+            var transactions = await _transactionService.GetByAmount(transactionAmount);
 
             foreach (var transaction in transactions)
             {
@@ -137,7 +135,6 @@ namespace PocketSmithAttachmentManager.Menus
                     Console.Clear();
                     Console.WriteLine("Please enter an end date or [C]ancel and press ENTER:");
 
-
                     var selectedOption = Console.ReadLine();
                     if (selectedOption.ToLower() == "c")
                     {
@@ -150,10 +147,9 @@ namespace PocketSmithAttachmentManager.Menus
                 {
                     endDate = null;
                 }
-
             } while (endDate == null);
 
-            var transactions = await _transactionService.GetTransactionsByDate(Convert.ToDateTime(startDate), endDate);
+            var transactions = await _transactionService.GetByDate(Convert.ToDateTime(startDate), endDate);
 
             foreach (var transaction in transactions)
             {
@@ -161,7 +157,6 @@ namespace PocketSmithAttachmentManager.Menus
             }
 
             return await selectTransaction(transactions);
-
         }
 
         public static async Task<TransactionModel> GetTransactionByPayee()
@@ -179,23 +174,19 @@ namespace PocketSmithAttachmentManager.Menus
                 }
             } while (string.IsNullOrEmpty(transactionPayee));
 
-            var transactions = await _transactionService.GetTransactionsByPayee(transactionPayee);
-   foreach (var transaction in transactions)
+            var transactions = await _transactionService.GetByPayee(transactionPayee);
+            foreach (var transaction in transactions)
             {
                 transaction.Attachments = await _attachmentService.GetByTransactionId(transaction.Id);
             }
-         
 
             return await selectTransaction(transactions);
         }
 
-
-
         private static async Task<TransactionModel> selectTransaction(List<TransactionModel> transactions)
         {
             Console.Clear();
-            Console.WriteLine(transactions.ToStringTable(new[] { "Index", "Amount", "Date", "Payee", "Type", "Account Name", "Attachments"}, t => t.Index, t => t.Amount, t => t.Date,t => Regex.Match(t.Payee, ".{0,25}").Value, t => t.Type, t => t.TransactionAccount.Name, t => t.Attachments.Count));
-
+            Console.WriteLine(transactions.ToStringTable(new[] { "Index", "Amount", "Date", "Payee", "Type", "Account Name", "Attachments" }, t => t.Index, t => t.Amount, t => t.Date, t => Regex.Match(t.Payee, ".{0,25}").Value, t => t.Type, t => t.TransactionAccount.Name, t => t.Attachments.Count));
 
             int selectedTransaction = 0;
             do

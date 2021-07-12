@@ -1,20 +1,18 @@
-﻿using PocketSmithAttachmentManager.Services;
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using PocketSmithAttachmentManager.WebServices;
 
 namespace PocketSmithAttachmentManager.Menus
 {
     public static class LocalAttachmentMenu
     {
         private static readonly AttachmentService _attachmentService;
-        private static readonly TransactionService _transactionService;
 
         static LocalAttachmentMenu()
         {
             _attachmentService = new AttachmentService(typeof(LocalAttachmentMenu));
-            _transactionService = new TransactionService();
         }
 
         public static string MenuText { get; } =

@@ -1,6 +1,6 @@
-﻿using PocketSmithAttachmentManager.Models;
-using PocketSmithAttachmentManager.Services;
-using PocketSmithAttachmentManager.Services.Extensions;
+﻿using PocketSmith.DataExportServices.JsonModels;
+using PocketSmithAttachmentManager.WebServices;
+using PocketSmithAttachmentManager.WebServices.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;

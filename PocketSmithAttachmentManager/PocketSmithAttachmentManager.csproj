@@ -7,8 +7,20 @@
 	
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.15">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="ObjectsComparer" Version="1.4.1" />
+    <PackageReference Include="ShellProgressBar" Version="5.1.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="5.0.0" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
+  </ItemGroup>
+	
+
+  <ItemGroup>
+    <ProjectReference Include="..\PocketSmith.DataExportServices\PocketSmith.DataExportServices.csproj" />
+    <ProjectReference Include="..\PocketSmith.DataExport\PocketSmith.DataExport.csproj" />
   </ItemGroup>
 
 </Project>
