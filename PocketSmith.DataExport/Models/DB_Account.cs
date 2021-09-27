@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace PocketSmith.DataExport.Models
 {
-    public class DB_Account : ModelBase<long>
+    public class DB_Account : ModelBase<long>, ISoftDeletable
     {
         public string Title { get; set; }
         public string CurrencyCode { get; set; }
@@ -15,6 +15,7 @@ namespace PocketSmith.DataExport.Models
         public decimal? SafeBalanceInBaseCurrency { get; set; }
         public string Type { get; set; }
         public string IsNetWorth { get; set; }
+        public bool Deleted { get; set; }
 
         public long? PrimaryTransactionAccountId { get; set; }
         public DB_TransactionAccount PrimaryTransactionAccount { get; set; }
