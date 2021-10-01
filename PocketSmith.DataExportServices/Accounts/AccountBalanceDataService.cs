@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using PocketSmith.DataExport;
@@ -33,6 +34,8 @@ namespace PocketSmith.DataExportServices.Accounts
             }
 
             var dbEntity = _mapper.Map<DB_AccountBalance>(createItem);
+            dbEntity.CreatedTime = DateTime.UtcNow;
+            dbEntity.LastUpdated = DateTime.UtcNow;
 
             var createResult = await context.AddAsync(dbEntity);
             await context.SaveChangesAsync();

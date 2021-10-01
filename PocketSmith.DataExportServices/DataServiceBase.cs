@@ -4,6 +4,7 @@ using PocketSmith.DataExport;
 using PocketSmith.DataExport.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace PocketSmith.DataExportServices
@@ -46,7 +47,6 @@ namespace PocketSmith.DataExportServices
             }
           
         }
-
         public virtual async Task Update(TJsonModel updateItem, TEntityId id)
         {
             await using var context = ContextFactory.Create(DatabaseFilePath);
@@ -71,15 +71,6 @@ namespace PocketSmith.DataExportServices
                 throw;
             }
             
-        }
-
-        public virtual async Task Delete(TEntityId id)
-        {
-            await using var context = ContextFactory.Create(DatabaseFilePath);
-
-            var dbEntity = await context.Set<TDatabaseModel>().FindAsync((object)id);
-            context.Remove(dbEntity);
-            await context.SaveChangesAsync();
         }
 
         public virtual async Task<List<TJsonModel>> GetAll()
@@ -107,5 +98,6 @@ namespace PocketSmith.DataExportServices
 
             return await context.Set<TDatabaseModel>().AnyAsync(x => x.Id.Equals(id));
         }
+
     }
 }
