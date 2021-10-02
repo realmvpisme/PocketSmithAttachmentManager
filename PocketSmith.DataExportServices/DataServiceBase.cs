@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace PocketSmith.DataExportServices
 {
@@ -15,11 +16,13 @@ namespace PocketSmith.DataExportServices
         protected readonly Mapper Mapper;
         protected readonly ContextFactory ContextFactory;
         protected readonly string DatabaseFilePath;
+        protected readonly IMemoryCache _memoryCache;
 
         protected DataServiceBase(string databaseFilePath)
         {
             Mapper = new Mapper(MapperConfigurationGenerator.Invoke());
             ContextFactory = new ContextFactory();
+            _memoryCache = new MemoryCache(new MemoryCacheOptions());
 
             if (string.IsNullOrEmpty(databaseFilePath))
             {

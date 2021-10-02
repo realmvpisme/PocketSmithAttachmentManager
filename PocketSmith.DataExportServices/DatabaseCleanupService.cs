@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -42,50 +43,65 @@ namespace PocketSmith.DataExportServices
             _cacheKeys = new List<string>();
         }
 
-        public void QueueCleanupEntity<TDeletableItem>(TDeletableItem item)
+        public void QueueCleanupEntity<TDisplayModel, TDatabaseModel>(TDisplayModel item)
         {
-            var idValue = typeof(TDeletableItem).GetProperty("Id")?.GetValue(item);
-            var key = typeof(TDeletableItem).FullName + "_" + idValue;
+            var dbEntity = _mapper.Map<TDatabaseModel>(item);
+            var idValue = typeof(TDatabaseModel).GetProperty("Id")?.GetValue(dbEntity);
+            var key = typeof(TDatabaseModel).FullName + "_" + idValue;
+            if (_memoryCache.TryGetValue(key, out object existingCachedRecord))
+            {
+                return;
+            }
             _memoryCache.Set(
                 key, 
-                item,
+                dbEntity,
                 new MemoryCacheEntryOptions().SetPriority(CacheItemPriority.NeverRemove));
             _cacheKeys.Add(key);
         }
 
         public async Task CleanUpDatabase()
         {
-            Console.WriteLine("Cleaning up database.,.");
-            foreach (var key in _cacheKeys)
+            Console.WriteLine("Cleaning up database...");
+            try
             {
-                var cachedValueExists = _memoryCache.TryGetValue(key, out var cacheValue);
-                if (cachedValueExists)
+                foreach (var key in _cacheKeys)
                 {
-                    var typeName = Regex.Match(key, "[a-z].+(?=_)", RegexOptions.IgnoreCase).Value;
-                    try
+                    var cachedValueExists = _memoryCache.TryGetValue(key, out var cachedValue);
+                    if (cachedValueExists)
                     {
-                        var typedCacheValue = Convert.ChangeType(cacheValue, Type.GetType(typeName));
-                        var idValue = typedCacheValue.GetType().GetProperty("Id").GetValue(typedCacheValue);
-                        await deleteEntity(typedCacheValue, idValue);
-                    }
-                    catch (Exception e)
-                    {
-                        
+                        var typeName = Regex.Match(key, "[a-z].+(?=_)", RegexOptions.IgnoreCase).Value;
+                        var assembly = Assembly.GetAssembly(typeof(DB_Transaction));
+                        var entityType = assembly.GetType(typeName);
+                        var entityIdType = assembly.GetType(typeName).GetProperty("Id").GetValue(cachedValue).GetType();
+                        var entityId = cachedValue.GetType().GetProperty("Id").GetValue(cachedValue);
+                        var deleteMethod = GetType().GetMethod("DeleteEntity").MakeGenericMethod(new Type[]{entityType, entityIdType});
+
+                        if (deleteMethod != null)
+                        {
+                            deleteMethod.Invoke(this, new object[] { entityId });
+                            _memoryCache.Remove(key);
+                        }
                     }
                 }
             }
+            catch (Exception e)
+            {
+               Console.WriteLine("Cleanup failed. An error occurred.");
+            }
+           
 
             Console.WriteLine("Cleanup finished!");
         }
 
-        private async Task deleteEntity<TDatabaseModel, TEntityId>(TDatabaseModel entity, TEntityId id)
+        public async Task DeleteEntity<TDatabaseModel, TEntityId>(TEntityId entityId)
         where TDatabaseModel : ModelBase<TEntityId>
         {
             await using var context = _contextFactory.Create(_databaseFilePath);
 
-            var selectedEntity = await context.Set<TDatabaseModel>().FindAsync((object)id);
+            var selectedEntity = await context.Set<TDatabaseModel>().FindAsync(entityId);
             if (selectedEntity != null)
             {
+                if(selectedEntity.GetType() == typeof(ISoftDeletable))
                 context.Remove(selectedEntity);
                 await context.SaveChangesAsync();
             }
