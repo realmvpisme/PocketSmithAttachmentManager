@@ -17,8 +17,9 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore.Scaffolding.Metadata.Internal;
 using ObjectsComparer;
+using PocketSmith.DataExport.Extensions;
+using PocketSmith.DataExport.Models;
 
 namespace PocketSmithAttachmentManager.WebServices
 {
@@ -91,12 +92,9 @@ namespace PocketSmithAttachmentManager.WebServices
 
 
             progressBar.Dispose();
+            Console.Clear();
 
-            var dbInstitutions = await _institutionDataService.GetAll();
-
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("All accounts successfully processed.");
-            Console.ForegroundColor = ConsoleColor.White;
+            ExtendedConsole.WriteSuccess("All accounts successfully processed.");
 
             if (!isInlineMethod)
             {
@@ -140,12 +138,8 @@ namespace PocketSmithAttachmentManager.WebServices
             progressBar.Dispose();
             Console.Clear();
 
-            var dbBudgetEvents = await _budgetEventDataService.GetAll();
-
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("All budget events successfully processed.");
-            Console.ForegroundColor = ConsoleColor.White;
-
+            ExtendedConsole.WriteSuccess("All budget events successfully processed.");
+       
             if (!isInlineMethod)
             {
                 Console.WriteLine("Returning to main menu...");
@@ -175,13 +169,11 @@ namespace PocketSmithAttachmentManager.WebServices
             progressBar.Dispose();
             Console.Clear();
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("All categories successfully processed.");
-            Console.ForegroundColor = ConsoleColor.White;
+            ExtendedConsole.WriteSuccess("All categories successfully processed.");
 
             if (!isInlineMethod)
             {
-                Console.WriteLine("Returning to main menu...");
+                ExtendedConsole.WriteInfo("Returning to main menu...");
 
                 Thread.Sleep(5000);
 
@@ -289,16 +281,12 @@ namespace PocketSmithAttachmentManager.WebServices
                 await context.Database.MigrateAsync();
             }
             catch (Exception e)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Database file failed to load.");
-                Console.ForegroundColor = ConsoleColor.White; 
+            { 
+                ExtendedConsole.WriteError("Database file failed to load.");
                 Environment.Exit((int)ExitCodes.InvalidDatabase);
             }
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Database file loaded successfully.");
-            Console.ForegroundColor = ConsoleColor.White;
+            ExtendedConsole.WriteSuccess("Database file loaded successfully.");
 
             //Create service if database file was found.
             _transactionDataService = new TransactionDataService(filePath);
@@ -372,7 +360,7 @@ namespace PocketSmithAttachmentManager.WebServices
             {
                 foreach (var dbAccount in dbAccounts.Where(x => apiAccounts.All(y => y.Id != x.Id)))
                 {
-                    _cleanupService.QueueCleanupEntity(dbAccount);
+                    _cleanupService.QueueCleanupEntity<AccountModel, DB_Account>(dbAccount);
                 }
             }
 
@@ -412,7 +400,7 @@ namespace PocketSmithAttachmentManager.WebServices
             {
                 foreach (var dbBudgetEvent in dbBudgetEvents.Where(x => apiBudgetEvents.All(y => y.Id != x.Id)))
                 {
-                    _cleanupService.QueueCleanupEntity(dbBudgetEvent);
+                    _cleanupService.QueueCleanupEntity<BudgetEventModel, DB_BudgetEvent>(dbBudgetEvent);
                 }
             }
         }
@@ -458,7 +446,7 @@ namespace PocketSmithAttachmentManager.WebServices
             {
                 foreach (var dbScenario in dbScenarios.Where(x => apiScenarios.All(y => y.Id != x.Id)))
                 {
-                    _cleanupService.QueueCleanupEntity(dbScenario);
+                    _cleanupService.QueueCleanupEntity<ScenarioModel, DB_Scenario>(dbScenario);
                 }
             }
             
@@ -501,7 +489,7 @@ namespace PocketSmithAttachmentManager.WebServices
                 {
                     foreach (var dbAccount in dbAccounts.Where(x => apiAccounts.All(y => y.Id != x.Id)))
                     {
-                        _cleanupService.QueueCleanupEntity(dbAccount);
+                        _cleanupService.QueueCleanupEntity<TransactionAccountModel, DB_TransactionAccount>(dbAccount);
                     }
                 }
             }
@@ -540,7 +528,7 @@ namespace PocketSmithAttachmentManager.WebServices
             {
                 foreach (var dbCategory in dbCategories.Where(x => apiCategories.All(y => y.Id != x.Id)))
                 {
-                    _cleanupService.QueueCleanupEntity(dbCategory);
+                    _cleanupService.QueueCleanupEntity<CategoryModel,DB_Category>(dbCategory);
                 }
             }
         }
@@ -576,7 +564,7 @@ namespace PocketSmithAttachmentManager.WebServices
             {
                 foreach (var dbInstitution in dbInstitutions.Where(x => apiInstitutions.All(y => y.Id != x.Id)))
                 {
-                    _cleanupService.QueueCleanupEntity(dbInstitution);
+                    _cleanupService.QueueCleanupEntity<InstitutionModel, DB_Institution>(dbInstitution);
                 }
             }
         }
@@ -617,7 +605,7 @@ namespace PocketSmithAttachmentManager.WebServices
             {
                 foreach (var dbTransaction in dbTransactions.Where(x => apiTransactions.All(y => y.Id != x.Id)))
                 {
-                    _cleanupService.QueueCleanupEntity(dbTransaction);
+                    _cleanupService.QueueCleanupEntity<TransactionModel, DB_Transaction>(dbTransaction);
                 }
             }
         }
