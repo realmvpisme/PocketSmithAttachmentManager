@@ -2,7 +2,7 @@
 
 namespace PocketSmith.DataExport.Models
 {
-    public class DB_TransactionAccount : ModelBase<long>
+    public class DB_TransactionAccount : ModelBase<long>, ISoftDeletable
     {
         public long? AccountId { get; set; } 
         public DB_Account Account { get; set; }
@@ -19,6 +19,7 @@ namespace PocketSmith.DataExport.Models
         public decimal? SafeBalanceInBaseCurrency { get; set; }
         public decimal? StartingBalance { get; set; }
         public DateTime StartingBalanceDate { get; set; }
+        public bool Deleted { get; set; }
 
         public long? InstitutionId { get; set; }
         public DB_Institution Institution { get; set; }

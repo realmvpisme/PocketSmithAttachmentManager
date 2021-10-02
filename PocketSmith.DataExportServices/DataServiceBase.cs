@@ -35,6 +35,8 @@ namespace PocketSmith.DataExportServices
         {
             await using var context = ContextFactory.Create(DatabaseFilePath);
             var dbEntity = Mapper.Map<TDatabaseModel>(createItem);
+            dbEntity.CreatedTime = DateTime.UtcNow;
+            dbEntity.LastUpdated = DateTime.UtcNow;
 
 
             try
@@ -62,6 +64,7 @@ namespace PocketSmith.DataExportServices
             }
 
             var updatedEntity = Mapper.Map(updateItem, dbEntity);
+            updatedEntity.LastUpdated = DateTime.UtcNow;
             try
             {
                 
@@ -74,6 +77,25 @@ namespace PocketSmith.DataExportServices
                 throw;
             }
             
+        }
+
+        public virtual async Task Delete(TEntityId id)
+        {
+            await using var context = ContextFactory.Create(DatabaseFilePath);
+
+            var dbEntity = await context.Set<TDatabaseModel>().FindAsync((object)id);
+
+            if (dbEntity.GetType() == typeof(ISoftDeletable))
+            {
+                dbEntity.LastUpdated = DateTime.UtcNow;
+                ((ISoftDeletable)dbEntity).Deleted = true;
+                context.Update(dbEntity);
+                await context.SaveChangesAsync();
+                return;
+            }
+
+            context.Remove(dbEntity);
+            await context.SaveChangesAsync();
         }
 
         public virtual async Task<List<TJsonModel>> GetAll()
