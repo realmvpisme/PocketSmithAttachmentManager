@@ -3,4 +3,5 @@
   &lt;Assembly Path="C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.14\System.Private.CoreLib.dll" /&gt;&#xD;
   &lt;Assembly Path="C:\Users\NathanBurdick\.nuget\packages\microsoft.entityframeworkcore\3.1.15\lib\netstandard2.0\Microsoft.EntityFrameworkCore.dll" /&gt;&#xD;
   &lt;Assembly Path="C:\Program Files\dotnet\shared\Microsoft.NETCore.App\3.1.18\System.Private.CoreLib.dll" /&gt;&#xD;
+  &lt;Assembly Path="C:\Users\NathanBurdick\.nuget\packages\shellprogressbar\5.1.0\lib\netstandard2.0\ShellProgressBar.dll" /&gt;&#xD;
 &lt;/AssemblyExplorer&gt;</s:String></wpf:ResourceDictionary>

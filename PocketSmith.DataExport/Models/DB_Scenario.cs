@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace PocketSmith.DataExport.Models
 {
-    public class DB_Scenario : ModelBase<long>
+    public class DB_Scenario : ModelBase<long>, ISoftDeletable
     {
         public long? AccountId { get; set; }
         public DB_Account Account { get; set; }
@@ -26,6 +26,7 @@ namespace PocketSmith.DataExport.Models
         public DateTime? CurrentBalanceDate { get; set; }
         public decimal? SafeBalance { get; set; }
         public decimal? SafeBalanceInBaseCurrency { get; set; }
+        public bool Deleted { get; set; }
 
         public ICollection<DB_BudgetEvent> BudgetEvents { get; set; }
     }

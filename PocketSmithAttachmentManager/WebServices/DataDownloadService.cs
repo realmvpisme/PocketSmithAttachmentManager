@@ -1,5 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using ObjectsComparer;
 using PocketSmith.DataExport;
+using PocketSmith.DataExport.Extensions;
+using PocketSmith.DataExport.Models;
 using PocketSmith.DataExportServices;
 using PocketSmith.DataExportServices.Accounts;
 using PocketSmith.DataExportServices.Budget;
@@ -17,9 +20,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using ObjectsComparer;
-using PocketSmith.DataExport.Extensions;
-using PocketSmith.DataExport.Models;
 
 namespace PocketSmithAttachmentManager.WebServices
 {
@@ -42,7 +42,6 @@ namespace PocketSmithAttachmentManager.WebServices
         private AccountBalanceDataService _accountBalanceDataService;
         private DatabaseCleanupService _cleanupService;
 
-
         public DataDownloadService()
         {
             _httpClient = new HttpClient();
@@ -52,7 +51,6 @@ namespace PocketSmithAttachmentManager.WebServices
             _httpClient
                 .DefaultRequestHeaders
                 .Add("Accept", "application/json");
-
 
             _transactionService = new TransactionService();
             _contextFactory = new ContextFactory();
@@ -64,7 +62,6 @@ namespace PocketSmithAttachmentManager.WebServices
 
         public async Task DownloadAccounts(bool isInlineMethod = false)
         {
-
             var apiAccounts = await _accountService.GetAll();
 
             var apiTransactionAccounts = await _transactionAccountService.GetAll();
@@ -72,8 +69,6 @@ namespace PocketSmithAttachmentManager.WebServices
             var apiScenarios = apiAccounts.Select(x => x.PrimaryScenario).ToList();
 
             var apiInstitutions = apiTransactionAccounts.Select(x => x.Institution).ToList();
-
-
 
             var entityCount = apiAccounts.Count + apiTransactionAccounts.Count + apiScenarios.Count + apiInstitutions.Count;
 
@@ -90,11 +85,11 @@ namespace PocketSmithAttachmentManager.WebServices
             await processTransactionAccounts(apiTransactionAccounts, progressBar, true);
             await processScenarios(apiScenarios, progressBar, true);
 
-
             progressBar.Dispose();
-            Console.Clear();
 
             ExtendedConsole.WriteSuccess("All accounts successfully processed.");
+            Thread.Sleep(TimeSpan.FromSeconds(2));
+            Console.Clear();
 
             if (!isInlineMethod)
             {
@@ -136,10 +131,11 @@ namespace PocketSmithAttachmentManager.WebServices
             await processBudgetEvents(apiBudgetEvents, progressBar, true);
 
             progressBar.Dispose();
-            Console.Clear();
 
             ExtendedConsole.WriteSuccess("All budget events successfully processed.");
-       
+            Thread.Sleep(TimeSpan.FromSeconds(2));
+            Console.Clear();
+
             if (!isInlineMethod)
             {
                 Console.WriteLine("Returning to main menu...");
@@ -152,7 +148,6 @@ namespace PocketSmithAttachmentManager.WebServices
 
         public async Task DownloadCategories(bool isInlineMethod = false)
         {
-            Console.Clear();
             var apiCategories = await _categoryService.GetAll();
 
             var entityCount = apiCategories.Count;
@@ -167,9 +162,10 @@ namespace PocketSmithAttachmentManager.WebServices
             await processCategories(apiCategories, progressBar, true);
 
             progressBar.Dispose();
-            Console.Clear();
 
             ExtendedConsole.WriteSuccess("All categories successfully processed.");
+            Thread.Sleep(TimeSpan.FromSeconds(2));
+            Console.Clear();
 
             if (!isInlineMethod)
             {
@@ -183,8 +179,6 @@ namespace PocketSmithAttachmentManager.WebServices
 
         public async Task DownloadTransactions(bool isInlineMethod = false)
         {
-            Console.Clear();
-
             var apiTransactions = await _transactionService.GetAll();
 
             var apiCategories = await resolveCategories(apiTransactions
@@ -221,7 +215,6 @@ namespace PocketSmithAttachmentManager.WebServices
             };
             using var progressBar = new ProgressBar(entityCount, "Updating Database Transactions", progressBarOptions);
 
-
             await processCategories(apiCategories, progressBar, false);
             await processInstitutions(apiInstitutions, progressBar, false);
             await processTransactionAccounts(apiAccounts, progressBar, false);
@@ -229,11 +222,9 @@ namespace PocketSmithAttachmentManager.WebServices
 
             progressBar.Dispose();
 
+            ExtendedConsole.WriteSuccess("All transactions successfully processed.");
+            Thread.Sleep(TimeSpan.FromSeconds(2));
             Console.Clear();
-
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("All transactions successfully processed.");
-            Console.ForegroundColor = ConsoleColor.White;
 
             if (!isInlineMethod)
             {
@@ -252,17 +243,13 @@ namespace PocketSmithAttachmentManager.WebServices
             await DownloadBudgetEvents(true);
             await DownloadCategories(true);
 
-
-            Console.WriteLine("Cleaning up database...");
             await _cleanupService.CleanUpDatabase();
-
 
             Console.WriteLine("Returning to main menu...");
 
             Thread.Sleep(5000);
 
             await MainMenu.Show();
-
         }
 
         public async Task<bool> LoadDatabase(string filePath)
@@ -281,7 +268,7 @@ namespace PocketSmithAttachmentManager.WebServices
                 await context.Database.MigrateAsync();
             }
             catch (Exception e)
-            { 
+            {
                 ExtendedConsole.WriteError("Database file failed to load.");
                 Environment.Exit((int)ExitCodes.InvalidDatabase);
             }
@@ -301,7 +288,6 @@ namespace PocketSmithAttachmentManager.WebServices
 
             return true;
         }
-
 
         private async Task processAccounts(List<AccountModel> apiAccounts, ProgressBar progressBar, bool runCleanup)
         {
@@ -339,8 +325,8 @@ namespace PocketSmithAttachmentManager.WebServices
                     var differences = comparer.CalculateDifferences(account, selectedDbAccount).ToList();
 
                     if (differences.Any())
-                    { 
-                        writeDifferencesToConsole("Accounts", account.Id.ToString(), differences);
+                    {
+                        //writeDifferencesToConsole("Accounts", account.Id.ToString(), differences);
                         await _accountDataService.Update(account, account.Id);
                     }
                 }
@@ -363,8 +349,8 @@ namespace PocketSmithAttachmentManager.WebServices
                     _cleanupService.QueueCleanupEntity<AccountModel, DB_Account>(dbAccount);
                 }
             }
-
         }
+
         private async Task processBudgetEvents(IEnumerable<BudgetEventModel> apiBudgetEvents, ProgressBar progressBar, bool runCleanup)
         {
             var dbBudgetEvents = await _budgetEventDataService.GetAll();
@@ -385,12 +371,11 @@ namespace PocketSmithAttachmentManager.WebServices
                     comparer.IgnoreMember(x => x.Name == "Scenario");
                     comparer.IgnoreMember(x => x.Name == "Category");
 
-
                     var differences = comparer.CalculateDifferences(budgetEvent, selectedDbBudgetEvent).ToList();
 
                     if (differences.Any())
                     {
-                        writeDifferencesToConsole("Budget Event", budgetEvent.Id, differences);
+                        //writeDifferencesToConsole("Budget Event", budgetEvent.Id, differences);
                         await _budgetEventDataService.Update(budgetEvent, budgetEvent.Id);
                     }
                 }
@@ -409,7 +394,6 @@ namespace PocketSmithAttachmentManager.WebServices
         {
             var dbScenarios = await _scenarioDataService.GetAll();
 
-
             foreach (var scenario in apiScenarios)
             {
                 //Prevents circular dependency between accounts and scenarios.
@@ -417,7 +401,7 @@ namespace PocketSmithAttachmentManager.WebServices
                 {
                     scenario.AccountId = null;
                 }
-                
+
                 progressBar.Tick();
                 var selectedDbScenario = dbScenarios.FirstOrDefault(x => x.Id == scenario.Id);
 
@@ -436,7 +420,7 @@ namespace PocketSmithAttachmentManager.WebServices
 
                     if (differences.Any())
                     {
-                        writeDifferencesToConsole("Scenario", scenario.Id.ToString(), differences);
+                        //writeDifferencesToConsole("Scenario", scenario.Id.ToString(), differences);
                         await _scenarioDataService.Update(scenario, scenario.Id);
                     }
                 }
@@ -449,7 +433,6 @@ namespace PocketSmithAttachmentManager.WebServices
                     _cleanupService.QueueCleanupEntity<ScenarioModel, DB_Scenario>(dbScenario);
                 }
             }
-            
         }
 
         private async Task processTransactionAccounts(IEnumerable<TransactionAccountModel> apiAccounts, ProgressBar progressBar, bool runCleanup)
@@ -480,7 +463,7 @@ namespace PocketSmithAttachmentManager.WebServices
 
                     if (differences.Any())
                     {
-                        writeDifferencesToConsole("Transaction Account", account.Id.ToString(), differences);
+                        //writeDifferencesToConsole("Transaction Account", account.Id.ToString(), differences);
                         await _transactionAccountDataService.Update(account, account.Id);
                     }
                 }
@@ -518,7 +501,7 @@ namespace PocketSmithAttachmentManager.WebServices
 
                     if (differences.Any())
                     {
-                        writeDifferencesToConsole("Category", category.Id.ToString(), differences);
+                        //writeDifferencesToConsole("Category", category.Id.ToString(), differences);
                         await _categoryDataService.Update(category, category.Id);
                     }
                 }
@@ -528,7 +511,7 @@ namespace PocketSmithAttachmentManager.WebServices
             {
                 foreach (var dbCategory in dbCategories.Where(x => apiCategories.All(y => y.Id != x.Id)))
                 {
-                    _cleanupService.QueueCleanupEntity<CategoryModel,DB_Category>(dbCategory);
+                    _cleanupService.QueueCleanupEntity<CategoryModel, DB_Category>(dbCategory);
                 }
             }
         }
@@ -554,7 +537,7 @@ namespace PocketSmithAttachmentManager.WebServices
                     var differences = comparer.CalculateDifferences(institution, selectedInstitution).ToList();
                     if (differences.Any())
                     {
-                        writeDifferencesToConsole("Institution", institution.Id.ToString(), differences);
+                        //writeDifferencesToConsole("Institution", institution.Id.ToString(), differences);
                         await _institutionDataService.Update(institution, institution.Id);
                     }
                 }
@@ -595,7 +578,7 @@ namespace PocketSmithAttachmentManager.WebServices
                     var differences = comparer.CalculateDifferences(apiTransaction, selectedDbTransaction).ToList();
                     if (differences.Any())
                     {
-                        writeDifferencesToConsole("Transaction", apiTransaction.Id.ToString(), differences);
+                        //writeDifferencesToConsole("Transaction", apiTransaction.Id.ToString(), differences);
                         await _transactionDataService.Update(apiTransaction, apiTransaction.Id);
                     }
                 }
