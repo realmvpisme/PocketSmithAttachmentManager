@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace PocketSmith.DataExportServices.JsonModels
@@ -41,10 +42,22 @@ namespace PocketSmith.DataExportServices.JsonModels
         public string [] Labels { get; set; }
         [JsonPropertyName("transaction_account")]
         public TransactionAccountModel TransactionAccount { get; set; }
+
+        private DateTime _createdAt;
         [JsonPropertyName("created_at")]
-        public string CreatedAt { get; set; }
+        public string CreatedAt
+        {
+            get => _createdAt.ToLongDateString();
+            set => _createdAt = DateTime.Parse(value).ToUniversalTime();
+        }
+
+        private DateTime _updatedAt;
         [JsonPropertyName("updated_at")]
-        public string UpdatedAt { get; set; }
+        public string UpdatedAt
+        {
+            get => _updatedAt.ToLongDateString();
+            set => _updatedAt = DateTime.Parse(value).ToUniversalTime();
+        }
 
         [JsonIgnore]
         public int Index { get; set; }

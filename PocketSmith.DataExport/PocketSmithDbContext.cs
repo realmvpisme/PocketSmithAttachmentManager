@@ -1,5 +1,6 @@
 ﻿using System.Security.Cryptography.X509Certificates;
 using Microsoft.EntityFrameworkCore;
+using PocketSmith.DataExport.Extensions;
 using PocketSmith.DataExport.Models;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -102,6 +103,12 @@ namespace PocketSmith.DataExport
             modelBuilder.Entity<DB_Transaction>().Property(t => t.Labels)
                 .HasConversion(l => JsonSerializer.Serialize(l, default), 
                     l => JsonSerializer.Deserialize<string []>(l, default));
+
+        }
+
+        private void setGlobalQueryFilter(ModelBuilder modelBuilder)
+        {
+            modelBuilder.ApplyGlobalFilters<ISoftDeletable>(x => !x.Deleted);
         }
 
     }

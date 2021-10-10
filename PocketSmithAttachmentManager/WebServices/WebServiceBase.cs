@@ -76,7 +76,8 @@ namespace PocketSmithAttachmentManager.WebServices
                 progressBar.Tick();
             } while (RestClient.CurrentPageUri != RestClient.LastPageUri);
 
-
+            progressBar.Dispose();
+            Console.Clear();
             return apiEntityList;
         }
         public abstract Task<TJsonModel> GetById(TId id);
