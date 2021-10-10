@@ -1,5 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using ObjectsComparer;
 using PocketSmith.DataExport;
+using PocketSmith.DataExport.Extensions;
+using PocketSmith.DataExport.Models;
 using PocketSmith.DataExportServices;
 using PocketSmith.DataExportServices.Accounts;
 using PocketSmith.DataExportServices.Budget;
@@ -37,6 +40,7 @@ namespace PocketSmithAttachmentManager.WebServices
         private TransactionAccountDataService _transactionAccountDataService;
         private readonly AccountService _accountService;
         private AccountBalanceDataService _accountBalanceDataService;
+        private DatabaseCleanupService _cleanupService;
 
         public DataDownloadService()
         {
@@ -48,7 +52,6 @@ namespace PocketSmithAttachmentManager.WebServices
                 .DefaultRequestHeaders
                 .Add("Accept", "application/json");
 
-
             _transactionService = new TransactionService();
             _contextFactory = new ContextFactory();
             _categoryService = new CategoryService();
@@ -59,7 +62,6 @@ namespace PocketSmithAttachmentManager.WebServices
 
         public async Task DownloadAccounts(bool isInlineMethod = false)
         {
-
             var apiAccounts = await _accountService.GetAll();
 
             var apiTransactionAccounts = await _transactionAccountService.GetAll();
@@ -67,8 +69,6 @@ namespace PocketSmithAttachmentManager.WebServices
             var apiScenarios = apiAccounts.Select(x => x.PrimaryScenario).ToList();
 
             var apiInstitutions = apiTransactionAccounts.Select(x => x.Institution).ToList();
-
-
 
             var entityCount = apiAccounts.Count + apiTransactionAccounts.Count + apiScenarios.Count + apiInstitutions.Count;
 
@@ -80,18 +80,16 @@ namespace PocketSmithAttachmentManager.WebServices
 
             using var progressBar = new ProgressBar(entityCount, "Adding Accounts to Database", progressBarOptions);
 
-            await processInstitutions(apiInstitutions, progressBar);
-            await processAccounts(apiAccounts, progressBar);
-            await processTransactionAccounts(apiTransactionAccounts, progressBar);
-            await processScenarios(apiScenarios, progressBar);
-
-
+            await processInstitutions(apiInstitutions, progressBar, false);
+            await processAccounts(apiAccounts, progressBar, true);
+            await processTransactionAccounts(apiTransactionAccounts, progressBar, true);
+            await processScenarios(apiScenarios, progressBar, true);
 
             progressBar.Dispose();
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("All accounts downloaded successfully!");
-            Console.ForegroundColor = ConsoleColor.White;
+            ExtendedConsole.WriteSuccess("All accounts successfully processed.");
+            Thread.Sleep(TimeSpan.FromSeconds(2));
+            Console.Clear();
 
             if (!isInlineMethod)
             {
@@ -128,14 +126,15 @@ namespace PocketSmithAttachmentManager.WebServices
 
             using var progressBar = new ProgressBar(entityCount, "Adding Budget Events to Database", progressBarOptions);
 
-            await processCategories(apiBudgetCategories, progressBar);
-            await processScenarios(apiScenarios, progressBar);
-            await processBudgetEvents(apiBudgetEvents, progressBar);
+            await processCategories(apiBudgetCategories, progressBar, false);
+            await processScenarios(apiScenarios, progressBar, false);
+            await processBudgetEvents(apiBudgetEvents, progressBar, true);
 
+            progressBar.Dispose();
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("All budget events downloaded successfully!");
-            Console.ForegroundColor = ConsoleColor.White;
+            ExtendedConsole.WriteSuccess("All budget events successfully processed.");
+            Thread.Sleep(TimeSpan.FromSeconds(2));
+            Console.Clear();
 
             if (!isInlineMethod)
             {
@@ -147,10 +146,39 @@ namespace PocketSmithAttachmentManager.WebServices
             }
         }
 
-        public async Task DownloadTransactions(bool isInlineMethod = false)
+        public async Task DownloadCategories(bool isInlineMethod = false)
         {
+            var apiCategories = await _categoryService.GetAll();
+
+            var entityCount = apiCategories.Count;
+
+            var progressBarOptions = new ProgressBarOptions()
+            {
+                CollapseWhenFinished = true,
+                ForegroundColor = ConsoleColor.White
+            };
+            using var progressBar = new ProgressBar(entityCount, "Updating Database Categories", progressBarOptions);
+
+            await processCategories(apiCategories, progressBar, true);
+
+            progressBar.Dispose();
+
+            ExtendedConsole.WriteSuccess("All categories successfully processed.");
+            Thread.Sleep(TimeSpan.FromSeconds(2));
             Console.Clear();
 
+            if (!isInlineMethod)
+            {
+                ExtendedConsole.WriteInfo("Returning to main menu...");
+
+                Thread.Sleep(5000);
+
+                await MainMenu.Show();
+            }
+        }
+
+        public async Task DownloadTransactions(bool isInlineMethod = false)
+        {
             var apiTransactions = await _transactionService.GetAll();
 
             var apiCategories = await resolveCategories(apiTransactions
@@ -178,27 +206,25 @@ namespace PocketSmithAttachmentManager.WebServices
                 .Select(group => group.First())
                 .ToList();
 
-            var entityCount = apiTransactions.Count() + apiCategories.Count() + apiInstitutions.Count() +
-                              apiAccounts.Count();
+            var entityCount = apiTransactions.Count + apiCategories.Count + apiInstitutions.Count +
+                              apiAccounts.Count;
             var progressBarOptions = new ProgressBarOptions()
             {
                 CollapseWhenFinished = true,
                 ForegroundColor = ConsoleColor.White
             };
-            using var progressBar = new ProgressBar(entityCount, "Adding Transactions to Database", progressBarOptions);
+            using var progressBar = new ProgressBar(entityCount, "Updating Database Transactions", progressBarOptions);
 
-            await processCategories(apiCategories, progressBar);
-            await processInstitutions(apiInstitutions, progressBar);
-            await processTransactionAccounts(apiAccounts, progressBar);
-            await processTransactions(apiTransactions, progressBar);
+            await processCategories(apiCategories, progressBar, false);
+            await processInstitutions(apiInstitutions, progressBar, false);
+            await processTransactionAccounts(apiAccounts, progressBar, false);
+            await processTransactions(apiTransactions, progressBar, true);
 
             progressBar.Dispose();
 
+            ExtendedConsole.WriteSuccess("All transactions successfully processed.");
+            Thread.Sleep(TimeSpan.FromSeconds(2));
             Console.Clear();
-
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("All transactions downloaded successfully!");
-            Console.ForegroundColor = ConsoleColor.White;
 
             if (!isInlineMethod)
             {
@@ -215,6 +241,9 @@ namespace PocketSmithAttachmentManager.WebServices
             await DownloadAccounts(true);
             await DownloadTransactions(true);
             await DownloadBudgetEvents(true);
+            await DownloadCategories(true);
+
+            await _cleanupService.CleanUpDatabase();
 
             Console.WriteLine("Returning to main menu...");
 
@@ -240,15 +269,11 @@ namespace PocketSmithAttachmentManager.WebServices
             }
             catch (Exception e)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Database file failed to load.");
-                Console.ForegroundColor = ConsoleColor.White; 
+                ExtendedConsole.WriteError("Database file failed to load.");
                 Environment.Exit((int)ExitCodes.InvalidDatabase);
             }
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Database file loaded successfully.");
-            Console.ForegroundColor = ConsoleColor.White;
+            ExtendedConsole.WriteSuccess("Database file loaded successfully.");
 
             //Create service if database file was found.
             _transactionDataService = new TransactionDataService(filePath);
@@ -259,12 +284,12 @@ namespace PocketSmithAttachmentManager.WebServices
             _budgetEventDataService = new BudgetEventDataService(filePath);
             _accountBalanceDataService = new AccountBalanceDataService(filePath);
             _transactionAccountDataService = new TransactionAccountDataService(filePath);
+            _cleanupService = new DatabaseCleanupService(filePath);
 
             return true;
         }
 
-
-        private async Task processAccounts(List<AccountModel> apiAccounts, ProgressBar progressBar)
+        private async Task processAccounts(List<AccountModel> apiAccounts, ProgressBar progressBar, bool runCleanup)
         {
             var dbAccounts = await _accountDataService.GetAll();
 
@@ -286,7 +311,6 @@ namespace PocketSmithAttachmentManager.WebServices
                 {
                     var createResult = await _accountDataService.Create(account);
                     dbAccounts.Add(createResult);
-
                 }
                 else
                 {
@@ -295,11 +319,14 @@ namespace PocketSmithAttachmentManager.WebServices
                     comparer.IgnoreMember(x => x.Name == "TransactionAccounts");
                     comparer.IgnoreMember(x => x.Name == "PrimaryScenario");
                     comparer.IgnoreMember(x => x.Name == "PrimaryTransactionAccount");
+                    comparer.IgnoreMember(x => x.Name == "CurrentBalanceDate");
+                    comparer.IgnoreMember(x => x.Name == "UpdatedAt");
 
-                    var accountsEqual = comparer.Compare(account, selectedDbAccount);
+                    var differences = comparer.CalculateDifferences(account, selectedDbAccount).ToList();
 
-                    if (!accountsEqual)
+                    if (differences.Any())
                     {
+                        //writeDifferencesToConsole("Accounts", account.Id.ToString(), differences);
                         await _accountDataService.Update(account, account.Id);
                     }
                 }
@@ -315,8 +342,16 @@ namespace PocketSmithAttachmentManager.WebServices
                 await _accountBalanceDataService.Create(accountBalance);
             }
 
+            if (runCleanup)
+            {
+                foreach (var dbAccount in dbAccounts.Where(x => apiAccounts.All(y => y.Id != x.Id)))
+                {
+                    _cleanupService.QueueCleanupEntity<AccountModel, DB_Account>(dbAccount);
+                }
+            }
         }
-        private async Task processBudgetEvents(IEnumerable<BudgetEventModel> apiBudgetEvents, ProgressBar progressBar)
+
+        private async Task processBudgetEvents(IEnumerable<BudgetEventModel> apiBudgetEvents, ProgressBar progressBar, bool runCleanup)
         {
             var dbBudgetEvents = await _budgetEventDataService.GetAll();
 
@@ -336,21 +371,28 @@ namespace PocketSmithAttachmentManager.WebServices
                     comparer.IgnoreMember(x => x.Name == "Scenario");
                     comparer.IgnoreMember(x => x.Name == "Category");
 
-                    var budgetEventsEqual = comparer.Compare(budgetEvent, selectedDbBudgetEvent);
+                    var differences = comparer.CalculateDifferences(budgetEvent, selectedDbBudgetEvent).ToList();
 
-                    if (!budgetEventsEqual)
+                    if (differences.Any())
                     {
+                        //writeDifferencesToConsole("Budget Event", budgetEvent.Id, differences);
                         await _budgetEventDataService.Update(budgetEvent, budgetEvent.Id);
                     }
                 }
             }
 
+            if (runCleanup)
+            {
+                foreach (var dbBudgetEvent in dbBudgetEvents.Where(x => apiBudgetEvents.All(y => y.Id != x.Id)))
+                {
+                    _cleanupService.QueueCleanupEntity<BudgetEventModel, DB_BudgetEvent>(dbBudgetEvent);
+                }
+            }
         }
 
-        private async Task processScenarios(List<ScenarioModel> apiScenarios, ProgressBar progressBar)
+        private async Task processScenarios(List<ScenarioModel> apiScenarios, ProgressBar progressBar, bool runCleanup)
         {
             var dbScenarios = await _scenarioDataService.GetAll();
-
 
             foreach (var scenario in apiScenarios)
             {
@@ -359,7 +401,7 @@ namespace PocketSmithAttachmentManager.WebServices
                 {
                     scenario.AccountId = null;
                 }
-                
+
                 progressBar.Tick();
                 var selectedDbScenario = dbScenarios.FirstOrDefault(x => x.Id == scenario.Id);
 
@@ -372,17 +414,28 @@ namespace PocketSmithAttachmentManager.WebServices
                 {
                     var comparer = new ObjectsComparer.Comparer<ScenarioModel>();
                     comparer.IgnoreMember(x => x.Name == "BudgetEvents");
-                    var scenariosEqual = comparer.Compare(scenario, selectedDbScenario);
+                    comparer.IgnoreMember(x => x.Name == "UpdatedAt");
+                    comparer.IgnoreMember(x => x.Name == "CurrentBalanceDate");
+                    var differences = comparer.CalculateDifferences(scenario, selectedDbScenario).ToList();
 
-                    if (!scenariosEqual)
+                    if (differences.Any())
                     {
+                        //writeDifferencesToConsole("Scenario", scenario.Id.ToString(), differences);
                         await _scenarioDataService.Update(scenario, scenario.Id);
                     }
                 }
             }
+
+            if (runCleanup)
+            {
+                foreach (var dbScenario in dbScenarios.Where(x => apiScenarios.All(y => y.Id != x.Id)))
+                {
+                    _cleanupService.QueueCleanupEntity<ScenarioModel, DB_Scenario>(dbScenario);
+                }
+            }
         }
 
-        private async Task processTransactionAccounts(IEnumerable<TransactionAccountModel> apiAccounts, ProgressBar progressBar)
+        private async Task processTransactionAccounts(IEnumerable<TransactionAccountModel> apiAccounts, ProgressBar progressBar, bool runCleanup)
         {
             var dbAccounts = await _transactionAccountDataService.GetAll();
 
@@ -404,17 +457,28 @@ namespace PocketSmithAttachmentManager.WebServices
                 {
                     var comparer = new ObjectsComparer.Comparer<TransactionAccountModel>();
                     comparer.IgnoreMember(x => x.Name == "Institution");
-                    var accountsEqual = comparer.Compare(account, selectedDbAccount);
+                    comparer.IgnoreMember(x => x.Name == "UpdatedAt");
+                    comparer.IgnoreMember(x => x.Name == "CurrentBalanceDate");
+                    var differences = comparer.CalculateDifferences(account, selectedDbAccount).ToList();
 
-                    if (!accountsEqual)
+                    if (differences.Any())
                     {
+                        //writeDifferencesToConsole("Transaction Account", account.Id.ToString(), differences);
                         await _transactionAccountDataService.Update(account, account.Id);
+                    }
+                }
+
+                if (runCleanup)
+                {
+                    foreach (var dbAccount in dbAccounts.Where(x => apiAccounts.All(y => y.Id != x.Id)))
+                    {
+                        _cleanupService.QueueCleanupEntity<TransactionAccountModel, DB_TransactionAccount>(dbAccount);
                     }
                 }
             }
         }
 
-        private async Task processCategories(IEnumerable<CategoryModel> apiCategories, ProgressBar progressBar)
+        private async Task processCategories(IEnumerable<CategoryModel> apiCategories, ProgressBar progressBar, bool runCleanup)
         {
             var dbCategories = await _categoryDataService.GetAll();
 
@@ -432,17 +496,27 @@ namespace PocketSmithAttachmentManager.WebServices
                     var comparer = new ObjectsComparer.Comparer<CategoryModel>();
                     comparer.IgnoreMember(x => x.Name == "Children");
                     comparer.IgnoreMember(x => x.Name == "BudgetEvents");
-                    var categoriesEqual = comparer.Compare(category, selectedDbCategory);
+                    comparer.IgnoreMember(x => x.Name == "UpdatedAt");
+                    var differences = comparer.CalculateDifferences(category, selectedDbCategory).ToList();
 
-                    if (!categoriesEqual)
+                    if (differences.Any())
                     {
+                        //writeDifferencesToConsole("Category", category.Id.ToString(), differences);
                         await _categoryDataService.Update(category, category.Id);
                     }
                 }
             }
+
+            if (runCleanup)
+            {
+                foreach (var dbCategory in dbCategories.Where(x => apiCategories.All(y => y.Id != x.Id)))
+                {
+                    _cleanupService.QueueCleanupEntity<CategoryModel, DB_Category>(dbCategory);
+                }
+            }
         }
 
-        private async Task processInstitutions(IEnumerable<InstitutionModel> apiInstitutions, ProgressBar progressBar)
+        private async Task processInstitutions(IEnumerable<InstitutionModel> apiInstitutions, ProgressBar progressBar, bool runCleanup)
         {
             var dbInstitutions = await _institutionDataService.GetAll();
 
@@ -459,16 +533,26 @@ namespace PocketSmithAttachmentManager.WebServices
                 else
                 {
                     var comparer = new ObjectsComparer.Comparer<InstitutionModel>();
-                    var institutionsEqual = comparer.Compare(institution, selectedInstitution);
-                    if (!institutionsEqual)
+                    comparer.IgnoreMember(x => x.Name == "UpdatedAt");
+                    var differences = comparer.CalculateDifferences(institution, selectedInstitution).ToList();
+                    if (differences.Any())
                     {
+                        //writeDifferencesToConsole("Institution", institution.Id.ToString(), differences);
                         await _institutionDataService.Update(institution, institution.Id);
                     }
                 }
             }
+
+            if (runCleanup)
+            {
+                foreach (var dbInstitution in dbInstitutions.Where(x => apiInstitutions.All(y => y.Id != x.Id)))
+                {
+                    _cleanupService.QueueCleanupEntity<InstitutionModel, DB_Institution>(dbInstitution);
+                }
+            }
         }
 
-        private async Task processTransactions(IEnumerable<TransactionModel> apiTransactions, ProgressBar progressBar)
+        private async Task processTransactions(IEnumerable<TransactionModel> apiTransactions, ProgressBar progressBar, bool runCleanup)
         {
             var dbTransactions = await _transactionDataService.GetAll();
 
@@ -490,22 +574,21 @@ namespace PocketSmithAttachmentManager.WebServices
                     var comparer = new ObjectsComparer.Comparer<TransactionModel>();
                     comparer.IgnoreMember(x => x.Name == "Category");
                     comparer.IgnoreMember(x => x.Name == "TransactionAccount");
-                    var transactionsEqual = comparer.Compare(apiTransaction, selectedDbTransaction);
-                    if (!transactionsEqual)
+                    comparer.IgnoreMember(x => x.Name == "Attachments");
+                    var differences = comparer.CalculateDifferences(apiTransaction, selectedDbTransaction).ToList();
+                    if (differences.Any())
                     {
+                        //writeDifferencesToConsole("Transaction", apiTransaction.Id.ToString(), differences);
                         await _transactionDataService.Update(apiTransaction, apiTransaction.Id);
                     }
                 }
             }
 
-            Console.WriteLine("Cleaning up database transactions...");
-
-            //Delete database transactions that no longer exist in the API.
-            foreach (var dbTransaction in dbTransactions)
+            if (runCleanup)
             {
-                if (!apiTransactions.Any(x => x.Id.Equals(dbTransaction.Id)))
+                foreach (var dbTransaction in dbTransactions.Where(x => apiTransactions.All(y => y.Id != x.Id)))
                 {
-                    await _transactionDataService.Delete(dbTransaction.Id);
+                    _cleanupService.QueueCleanupEntity<TransactionModel, DB_Transaction>(dbTransaction);
                 }
             }
         }
@@ -551,6 +634,16 @@ namespace PocketSmithAttachmentManager.WebServices
             } while (apiCategories.Any());
 
             return returnCategories;
+        }
+
+        private void writeDifferencesToConsole(string entityType, string entityId, List<Difference> differences)
+        {
+            Console.WriteLine($"{entityType} {entityId} is being updated.");
+            Console.WriteLine("The following properties have changed:");
+            foreach (var difference in differences)
+            {
+                Console.WriteLine($"{difference.MemberPath}: Was {difference.Value1}. Is {difference.Value2}");
+            }
         }
     }
 }

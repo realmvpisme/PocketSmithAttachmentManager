@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Configuration;
+using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Internal;
 using PocketSmith.DataExportServices.JsonModels;
 using PocketSmithAttachmentManager.Constants;
 
@@ -18,33 +20,15 @@ namespace PocketSmithAttachmentManager.WebServices
         {
             var uri = PocketSmithUri.ALL_CATEGORIES;
             uri = uri.Replace("{userId}", ConfigurationManager.AppSettings["userId"]);
-
-            var categoryList = new List<CategoryModel>();
+            //The category API endpoint is unique in that all the categories are nested. First query returns all top level categories
+            //with child categories nested. 
 
             var httpResponse = await RestClient.Get(uri);
             var categories = JsonSerializer.Deserialize<List<CategoryModel>>(httpResponse, SerializerOptions);
 
-            categories.ForEach(c => categoryList.Add(c));
+            var categoryList = getAllCategories(categories);
 
-            do
-            {
-                if (!string.IsNullOrEmpty(RestClient.CurrentPageUri))
-                {
-                    RestClient.PreviousPageUri = RestClient.CurrentPageUri;
-                }
-
-                if (!string.IsNullOrEmpty(RestClient.NextPageUri))
-                {
-                    RestClient.CurrentPageUri = RestClient.NextPageUri;
-                }
-
-                httpResponse = await RestClient.Get(RestClient.CurrentPageUri);
-                categories = JsonSerializer.Deserialize<List<CategoryModel>>(httpResponse, SerializerOptions);
-                categories.ForEach(t => categoryList.Add(t));
-
-                //ToDo: Remove transaction count criteria.
-            } while (RestClient.CurrentPageUri != RestClient.LastPageUri);
-
+            
             return categoryList;
         }
 
@@ -56,6 +40,27 @@ namespace PocketSmithAttachmentManager.WebServices
             var httpResponse = await HttpClient.GetStringAsync(uri);
             var category = JsonSerializer.Deserialize<CategoryModel>(httpResponse, SerializerOptions);
             return category;
+        }
+
+        public List<CategoryModel> getAllCategories(List<CategoryModel> categories)
+        {
+            var categoryList = new List<CategoryModel>();
+            foreach (var category in categories)
+            {
+                if (category.Children.Any())
+                {
+                    var childCategories = getAllCategories(category.Children);
+                    categoryList.AddRange(childCategories);
+                    categoryList.Add(category);
+                }
+                else
+                {
+                    categoryList.Add(category);
+                }
+
+            }
+
+            return categoryList;
         }
 
     }
