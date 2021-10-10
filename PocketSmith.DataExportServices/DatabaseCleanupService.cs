@@ -101,9 +101,18 @@ namespace PocketSmith.DataExportServices
             var selectedEntity = await context.Set<TDatabaseModel>().FindAsync(entityId);
             if (selectedEntity != null)
             {
-                if(selectedEntity.GetType() == typeof(ISoftDeletable))
-                context.Remove(selectedEntity);
-                await context.SaveChangesAsync();
+                if (selectedEntity is ISoftDeletable)
+                {
+                    ((ISoftDeletable)selectedEntity).Deleted = true;
+                    selectedEntity.LastUpdated = DateTime.UtcNow;
+                    context.Update(selectedEntity);
+                    await context.SaveChangesAsync();
+                }
+                else
+                {
+                    context.Remove(selectedEntity);
+                    await context.SaveChangesAsync();
+                }
             }
         }
     }
