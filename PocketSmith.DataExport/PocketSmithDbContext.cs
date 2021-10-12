@@ -30,6 +30,8 @@ namespace PocketSmith.DataExport
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            setGlobalQueryFilter(modelBuilder);
+
             modelBuilder.Entity<DB_TransactionAccount>().ToTable("TransactionAccounts");
             modelBuilder.Entity<DB_Attachment>().ToTable("Attachments");
             modelBuilder.Entity<DB_Category>().ToTable("Categories");
