@@ -27,6 +27,7 @@ namespace PocketSmith.DataExport
         public DbSet<DB_BudgetEvent> BudgetEvents { get; set; }
         public DbSet<DB_Scenario> Scenarios { get; set; }
         public DbSet<DB_AccountBalance> AccountBalances { get; set; }
+        public DbSet<DB_BalanceSheetEntry> BalanceSheetEntries { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -43,6 +44,7 @@ namespace PocketSmith.DataExport
             modelBuilder.Entity<DB_Scenario>().ToTable("Scenarios");
             modelBuilder.Entity<DB_Account>().ToTable("Accounts");
             modelBuilder.Entity<DB_AccountBalance>().ToTable("AccountBalances");
+            modelBuilder.Entity<DB_BalanceSheetEntry>().ToTable("BalanceSheetEntry");
 
 
             modelBuilder.Entity<DB_TransactionAccount>()
@@ -105,6 +107,16 @@ namespace PocketSmith.DataExport
             modelBuilder.Entity<DB_Transaction>().Property(t => t.Labels)
                 .HasConversion(l => JsonSerializer.Serialize(l, default), 
                     l => JsonSerializer.Deserialize<string []>(l, default));
+
+            modelBuilder.Entity<DB_BalanceSheetEntry>()
+                .HasOne(x => x.Transaction)
+                .WithOne()
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<DB_BalanceSheetEntry>()
+                .HasOne(x => x.TransactionAccount)
+                .WithMany()
+                .OnDelete(DeleteBehavior.NoAction);
 
         }
 
