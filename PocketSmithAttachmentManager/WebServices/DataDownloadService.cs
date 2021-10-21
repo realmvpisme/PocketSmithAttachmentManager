@@ -20,6 +20,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using PocketSmith.DataExportServices.BalanceSheet;
 
 namespace PocketSmithAttachmentManager.WebServices
 {
@@ -41,6 +42,7 @@ namespace PocketSmithAttachmentManager.WebServices
         private readonly AccountService _accountService;
         private AccountBalanceDataService _accountBalanceDataService;
         private DatabaseCleanupService _cleanupService;
+        private BalanceSheetDataService _balanceSheetDataService;
 
         public DataDownloadService()
         {
@@ -244,6 +246,7 @@ namespace PocketSmithAttachmentManager.WebServices
             await DownloadCategories(true);
 
             await _cleanupService.CleanUpDatabase();
+            await _balanceSheetDataService.UpdateBalanceSheetEntries();
 
             Console.WriteLine("Returning to main menu...");
 
@@ -285,6 +288,7 @@ namespace PocketSmithAttachmentManager.WebServices
             _accountBalanceDataService = new AccountBalanceDataService(filePath);
             _transactionAccountDataService = new TransactionAccountDataService(filePath);
             _cleanupService = new DatabaseCleanupService(filePath);
+            _balanceSheetDataService = new BalanceSheetDataService(filePath);
 
             return true;
         }
