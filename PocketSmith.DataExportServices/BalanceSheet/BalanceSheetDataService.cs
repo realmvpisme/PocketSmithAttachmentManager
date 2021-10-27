@@ -30,15 +30,18 @@ namespace PocketSmith.DataExportServices.BalanceSheet
 
 
             List<DB_BalanceSheetEntry> balanceSheetTransactions =
-                getAccountBalances(dbTransactions, dbBalanceSheetEntries);
-
+                getAccountBalancesFromTransactions(dbTransactions, dbBalanceSheetEntries);
             await context.BalanceSheetEntries.AddRangeAsync(balanceSheetTransactions);
+
+            var fixedAssetBalances = await getFixedAssetBalances(context, dbBalanceSheetEntries);
+            await context.BalanceSheetEntries.AddRangeAsync(fixedAssetBalances);
+
             await context.SaveChangesAsync();
 
             ExtendedConsole.WriteSuccess("Balance sheet entries processed successfully!");
         }
 
-        private List<DB_BalanceSheetEntry> getAccountBalances(List<DB_Transaction> dbTransactions, List<DB_BalanceSheetEntry> dbBalanceSheetEntries)
+        private List<DB_BalanceSheetEntry> getAccountBalancesFromTransactions(List<DB_Transaction> dbTransactions, List<DB_BalanceSheetEntry> dbBalanceSheetEntries)
         {
             var balanceSheetEntries = new List<DB_BalanceSheetEntry>();
 
@@ -98,7 +101,8 @@ namespace PocketSmith.DataExportServices.BalanceSheet
                                 TransactionAccountId = transaction.AccountId.GetValueOrDefault(),
                                 FirstOfMonthDate = balanceSheetEntryDate,
                                 CreatedTime = DateTime.UtcNow,
-                                LastUpdated = DateTime.UtcNow
+                                LastUpdated = DateTime.UtcNow,
+                                OriginalTransactionDate = DateTime.Parse(transaction.Date)
                             };
 
                             if (!balanceSheetEntryExists(entry, dbBalanceSheetEntries))
@@ -114,6 +118,7 @@ namespace PocketSmith.DataExportServices.BalanceSheet
                 {
                     continue;
                 }
+
                 var oldestBalanceDate = selectedAccountBalanceEntries.Min(x => x.FirstOfMonthDate);
 
                 var newestBalanceDate = selectedAccountBalanceEntries.Max(x => x.FirstOfMonthDate);
@@ -142,22 +147,103 @@ namespace PocketSmith.DataExportServices.BalanceSheet
                         }
                     }
                 }
-
             }
 
             return balanceSheetEntries;
         }
 
-        //private async Task<List<DB_BalanceSheetEntry>> getFixedAssetBalances(PocketSmithDbContext context)
-        //{
-        //    var fixedAssets = await context.TransactionAccounts
-        //        .Where(x => x.Type == "vehicles" || x.Type == "property" || x.Type == "other_asset").ToListAsync();
+        private async Task<List<DB_BalanceSheetEntry>> getFixedAssetBalances(PocketSmithDbContext context, List<DB_BalanceSheetEntry> dbBalanceSheetEntries)
+        {
+            var balanceSheetEntries = new List<DB_BalanceSheetEntry>();
 
-        //    foreach (var asset in fixedAssets)
-        //    {
-                
-        //    }
-        //}
+            var fixedAssets = await context.Accounts
+                .Include(x => x.TransactionAccounts)
+                .Include(x => x.AccountBalances)
+                .Where(x => x.Type == "vehicles" || x.Type == "property" || x.Type == "other_asset").ToListAsync();
+
+            foreach (var asset in fixedAssets)
+            {
+                var firstBalance = asset.AccountBalances.OrderBy(x => x.Date).FirstOrDefault();
+                var lastBalance = asset.AccountBalances.OrderBy(x => x.Date).LastOrDefault();
+
+                if (firstBalance == null || lastBalance == null)
+                {
+                    continue;
+                }
+
+                foreach (var balance in asset.AccountBalances)
+                {
+                    DateTime balanceSheetEntryDate;
+                    if (balance.Date.Day == 1)
+                    {
+                        balanceSheetEntryDate = balance.Date;
+                    }
+                    else
+                    {
+                        balanceSheetEntryDate = new DateTime(
+                            balance.Date.Month < 12 ? balance.Date.Year : balance.Date.Year + 1,
+                            balance.Date.Month < 12 ? balance.Date.Month + 1 : 1,
+                            1);
+                    }
+
+                    var newBalanceSheetEntry = new DB_BalanceSheetEntry
+                    {
+                        AccountBalance = balance.Balance,
+                        CreatedTime = DateTime.UtcNow,
+                        LastUpdated = DateTime.UtcNow,
+                        FirstOfMonthDate = balanceSheetEntryDate,
+                        TransactionAccountId = asset.PrimaryTransactionAccountId ?? 0,
+                        OriginalTransactionDate = balance.Date
+                    };
+                    if (newBalanceSheetEntry.FirstOfMonthDate < new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1)
+                    && !dbBalanceSheetEntries.Any(x => x.TransactionAccountId == newBalanceSheetEntry.TransactionAccountId
+                        && x.FirstOfMonthDate == newBalanceSheetEntry.FirstOfMonthDate
+                        && x.AccountBalance == newBalanceSheetEntry.AccountBalance))
+                    {
+                        balanceSheetEntries.Add(newBalanceSheetEntry);
+                    }
+                }
+
+                var selectedAssetBalanceEntries =
+                    balanceSheetEntries.Where(x => x.TransactionAccountId == asset.PrimaryTransactionAccountId);
+                if (!selectedAssetBalanceEntries.Any())
+                {
+                    continue;
+                }
+
+                var oldestBalanceDate = selectedAssetBalanceEntries.Min(x => x.FirstOfMonthDate);
+                var newestBalanceDate = selectedAssetBalanceEntries.Max(x => x.FirstOfMonthDate);
+
+                var interimDates = getInterimFirstOfMonthDates(oldestBalanceDate, newestBalanceDate);
+
+                foreach (var interimDate in interimDates)
+                {
+                    if (selectedAssetBalanceEntries.All(x => x.FirstOfMonthDate == interimDate))
+                    {
+                        continue;
+                    }
+                    var maxAvailableDate = selectedAssetBalanceEntries
+                        .Where(x => x.FirstOfMonthDate <= interimDate).Max(x => x.FirstOfMonthDate);
+                    var newBalanceEntry = new DB_BalanceSheetEntry
+                    {
+                        AccountBalance = selectedAssetBalanceEntries
+                            .FirstOrDefault(x => x.FirstOfMonthDate == maxAvailableDate).AccountBalance,
+                        FirstOfMonthDate = interimDate,
+                        TransactionAccountId = asset.PrimaryTransactionAccountId ?? 0,
+                        CreatedTime = DateTime.UtcNow,
+                        LastUpdated = DateTime.UtcNow
+                    };
+
+                    if (!balanceSheetEntryExists(newBalanceEntry, dbBalanceSheetEntries))
+                    {
+                        balanceSheetEntries.Add(newBalanceEntry);
+                    }
+
+                }
+            }
+
+            return balanceSheetEntries;
+        }
 
         private bool balanceSheetEntryExists(DB_BalanceSheetEntry entry, List<DB_BalanceSheetEntry> dbBalanceSheetEntries)
         {

@@ -6,6 +6,7 @@ namespace PocketSmith.DataExport.Models
     {
         public decimal AccountBalance { get; set; }
         public DateTime FirstOfMonthDate { get; set; }
+        public DateTime? OriginalTransactionDate { get; set; }
         public long? TransactionId { get; set; }
         public DB_Transaction Transaction { get; set; }
         public long TransactionAccountId { get; set; }
