@@ -1,5 +1,7 @@
-﻿using System.Security.Cryptography.X509Certificates;
+﻿using System;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PocketSmith.DataExport.Extensions;
 using PocketSmith.DataExport.Models;
 using JsonSerializer = System.Text.Json.JsonSerializer;
@@ -117,6 +119,18 @@ namespace PocketSmith.DataExport
                 .HasOne(x => x.TransactionAccount)
                 .WithMany()
                 .OnDelete(DeleteBehavior.NoAction);
+
+            var dateTimeConverter = new ValueConverter<DateTime, string>(
+                v => v.ToString("yyyy-MM-ddTHH:mm:ss.sssZ"), v => DateTime.Parse(v));
+
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
+                        property.SetValueConverter(dateTimeConverter);
+                }
+            }
 
         }
 
