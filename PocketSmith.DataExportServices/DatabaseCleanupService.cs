@@ -92,28 +92,5 @@ namespace PocketSmith.DataExportServices
 
             Console.WriteLine("Cleanup finished!");
         }
-
-        public async Task DeleteEntity<TDatabaseModel, TEntityId>(TEntityId entityId)
-        where TDatabaseModel : ModelBase<TEntityId>
-        {
-            await using var context = _contextFactory.Create(_databaseFilePath);
-
-            var selectedEntity = await context.Set<TDatabaseModel>().FindAsync(entityId);
-            if (selectedEntity != null)
-            {
-                if (selectedEntity is ISoftDeletable)
-                {
-                    ((ISoftDeletable)selectedEntity).Deleted = true;
-                    selectedEntity.LastUpdated = DateTime.UtcNow;
-                    context.Update(selectedEntity);
-                    await context.SaveChangesAsync();
-                }
-                else
-                {
-                    context.Remove(selectedEntity);
-                    await context.SaveChangesAsync();
-                }
-            }
-        }
     }
 }

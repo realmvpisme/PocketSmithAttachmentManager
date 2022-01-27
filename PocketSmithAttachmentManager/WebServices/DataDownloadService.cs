@@ -85,7 +85,7 @@ namespace PocketSmithAttachmentManager.WebServices
             await processInstitutions(apiInstitutions, progressBar, false);
             await processAccounts(apiAccounts, progressBar, true);
             await processTransactionAccounts(apiTransactionAccounts, progressBar, true);
-            await processScenarios(apiScenarios, progressBar, true);
+            await processScenarios(apiScenarios, progressBar, !isInlineMethod);
 
             progressBar.Dispose();
 
@@ -325,12 +325,12 @@ namespace PocketSmithAttachmentManager.WebServices
                     comparer.IgnoreMember(x => x.Name == "PrimaryTransactionAccount");
                     comparer.IgnoreMember(x => x.Name == "CurrentBalanceDate");
                     comparer.IgnoreMember(x => x.Name == "UpdatedAt");
+                    comparer.IgnoreMember(x => x.Name == "CreatedAt");
 
                     var differences = comparer.CalculateDifferences(account, selectedDbAccount).ToList();
 
                     if (differences.Any())
                     {
-                        //writeDifferencesToConsole("Accounts", account.Id.ToString(), differences);
                         await _accountDataService.Update(account, account.Id);
                     }
                 }
@@ -379,7 +379,6 @@ namespace PocketSmithAttachmentManager.WebServices
 
                     if (differences.Any())
                     {
-                        //writeDifferencesToConsole("Budget Event", budgetEvent.Id, differences);
                         await _budgetEventDataService.Update(budgetEvent, budgetEvent.Id);
                     }
                 }
@@ -419,12 +418,12 @@ namespace PocketSmithAttachmentManager.WebServices
                     var comparer = new ObjectsComparer.Comparer<ScenarioModel>();
                     comparer.IgnoreMember(x => x.Name == "BudgetEvents");
                     comparer.IgnoreMember(x => x.Name == "UpdatedAt");
+                    comparer.IgnoreMember(x => x.Name == "CreatedAt");
                     comparer.IgnoreMember(x => x.Name == "CurrentBalanceDate");
                     var differences = comparer.CalculateDifferences(scenario, selectedDbScenario).ToList();
 
                     if (differences.Any())
                     {
-                        //writeDifferencesToConsole("Scenario", scenario.Id.ToString(), differences);
                         await _scenarioDataService.Update(scenario, scenario.Id);
                     }
                 }
@@ -462,6 +461,7 @@ namespace PocketSmithAttachmentManager.WebServices
                     var comparer = new ObjectsComparer.Comparer<TransactionAccountModel>();
                     comparer.IgnoreMember(x => x.Name == "Institution");
                     comparer.IgnoreMember(x => x.Name == "UpdatedAt");
+                    comparer.IgnoreMember(x => x.Name == "CreatedAt");
                     comparer.IgnoreMember(x => x.Name == "CurrentBalanceDate");
                     var differences = comparer.CalculateDifferences(account, selectedDbAccount).ToList();
 
@@ -501,6 +501,7 @@ namespace PocketSmithAttachmentManager.WebServices
                     comparer.IgnoreMember(x => x.Name == "Children");
                     comparer.IgnoreMember(x => x.Name == "BudgetEvents");
                     comparer.IgnoreMember(x => x.Name == "UpdatedAt");
+                    comparer.IgnoreMember(x => x.Name == "CreatedAt");
                     var differences = comparer.CalculateDifferences(category, selectedDbCategory).ToList();
 
                     if (differences.Any())
@@ -579,6 +580,11 @@ namespace PocketSmithAttachmentManager.WebServices
                     comparer.IgnoreMember(x => x.Name == "Category");
                     comparer.IgnoreMember(x => x.Name == "TransactionAccount");
                     comparer.IgnoreMember(x => x.Name == "Attachments");
+                    comparer.IgnoreMember(x => x.Name == "CreatedAt");
+                    comparer.IgnoreMember(x => x.Name == "UpdatedAt");
+                    comparer.IgnoreMember(x => x.Name == "CreatedTime");
+                    comparer.IgnoreMember(x => x.Name == "LastUpdated");
+
                     var differences = comparer.CalculateDifferences(apiTransaction, selectedDbTransaction).ToList();
                     if (differences.Any())
                     {
@@ -638,16 +644,6 @@ namespace PocketSmithAttachmentManager.WebServices
             } while (apiCategories.Any());
 
             return returnCategories;
-        }
-
-        private void writeDifferencesToConsole(string entityType, string entityId, List<Difference> differences)
-        {
-            Console.WriteLine($"{entityType} {entityId} is being updated.");
-            Console.WriteLine("The following properties have changed:");
-            foreach (var difference in differences)
-            {
-                Console.WriteLine($"{difference.MemberPath}: Was {difference.Value1}. Is {difference.Value2}");
-            }
         }
     }
 }
