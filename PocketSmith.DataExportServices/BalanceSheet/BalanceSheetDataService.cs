@@ -21,6 +21,7 @@ namespace PocketSmith.DataExportServices.BalanceSheet
         }
         public async Task UpdateBalanceSheetEntries()
         {
+            Console.Clear();
             ExtendedConsole.WriteInfo("Processing balance sheet entries...");
             var context = _contextFactory.Create(_databaseFilePath);
 
