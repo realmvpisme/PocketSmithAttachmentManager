@@ -67,7 +67,6 @@ namespace PocketSmith.DataExportServices
             updatedEntity.LastUpdated = DateTime.UtcNow;
             try
             {
-                
                 context.Entry(updatedEntity).State = EntityState.Modified;
                 await context.SaveChangesAsync();
             }
