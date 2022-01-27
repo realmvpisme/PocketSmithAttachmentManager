@@ -2,15 +2,17 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PocketSmith.DataExport;
 
 namespace PocketSmith.DataExport.Migrations
 {
     [DbContext(typeof(PocketSmithDbContext))]
-    partial class PocketSmithDbContextModelSnapshot : ModelSnapshot
+    [Migration("20211013113256_AddBalanceSheetEntryTable")]
+    partial class AddBalanceSheetEntryTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -172,9 +174,6 @@ namespace PocketSmith.DataExport.Migrations
                     b.Property<DateTime>("LastUpdated")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("OriginalTransactionDate")
-                        .HasColumnType("TEXT");
-
                     b.Property<long>("TransactionAccountId")
                         .HasColumnType("INTEGER");
 
@@ -183,7 +182,8 @@ namespace PocketSmith.DataExport.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TransactionAccountId");
+                    b.HasIndex("TransactionAccountId")
+                        .IsUnique();
 
                     b.HasIndex("TransactionId")
                         .IsUnique();
@@ -637,8 +637,8 @@ namespace PocketSmith.DataExport.Migrations
             modelBuilder.Entity("PocketSmith.DataExport.Models.DB_BalanceSheetEntry", b =>
                 {
                     b.HasOne("PocketSmith.DataExport.Models.DB_TransactionAccount", "TransactionAccount")
-                        .WithMany()
-                        .HasForeignKey("TransactionAccountId")
+                        .WithOne()
+                        .HasForeignKey("PocketSmith.DataExport.Models.DB_BalanceSheetEntry", "TransactionAccountId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 

@@ -1,5 +1,7 @@
-﻿using System.Security.Cryptography.X509Certificates;
+﻿using System;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PocketSmith.DataExport.Extensions;
 using PocketSmith.DataExport.Models;
 using JsonSerializer = System.Text.Json.JsonSerializer;
@@ -27,6 +29,7 @@ namespace PocketSmith.DataExport
         public DbSet<DB_BudgetEvent> BudgetEvents { get; set; }
         public DbSet<DB_Scenario> Scenarios { get; set; }
         public DbSet<DB_AccountBalance> AccountBalances { get; set; }
+        public DbSet<DB_BalanceSheetEntry> BalanceSheetEntries { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -43,6 +46,7 @@ namespace PocketSmith.DataExport
             modelBuilder.Entity<DB_Scenario>().ToTable("Scenarios");
             modelBuilder.Entity<DB_Account>().ToTable("Accounts");
             modelBuilder.Entity<DB_AccountBalance>().ToTable("AccountBalances");
+            modelBuilder.Entity<DB_BalanceSheetEntry>().ToTable("BalanceSheetEntry");
 
 
             modelBuilder.Entity<DB_TransactionAccount>()
@@ -105,6 +109,28 @@ namespace PocketSmith.DataExport
             modelBuilder.Entity<DB_Transaction>().Property(t => t.Labels)
                 .HasConversion(l => JsonSerializer.Serialize(l, default), 
                     l => JsonSerializer.Deserialize<string []>(l, default));
+
+            modelBuilder.Entity<DB_BalanceSheetEntry>()
+                .HasOne(x => x.Transaction)
+                .WithOne()
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<DB_BalanceSheetEntry>()
+                .HasOne(x => x.TransactionAccount)
+                .WithMany()
+                .OnDelete(DeleteBehavior.NoAction);
+
+            var dateTimeConverter = new ValueConverter<DateTime, string>(
+                v => v.ToString("yyyy-MM-ddTHH:mm:ss.sssZ"), v => DateTime.Parse(v));
+
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
+                        property.SetValueConverter(dateTimeConverter);
+                }
+            }
 
         }
 

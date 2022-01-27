@@ -7,6 +7,8 @@
   <ItemGroup>
     <Compile Remove="Migrations\20210907114755_AddedInstitutionAccountNavigation.cs" />
     <Compile Remove="Migrations\20210907114755_AddedInstitutionAccountNavigation.Designer.cs" />
+    <Compile Remove="Migrations\20211027113915_AddOriginalTransactionDateField.cs" />
+    <Compile Remove="Migrations\20211027113915_AddOriginalTransactionDateField.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
