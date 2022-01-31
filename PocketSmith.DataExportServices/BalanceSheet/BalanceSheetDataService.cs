@@ -32,10 +32,34 @@ namespace PocketSmith.DataExportServices.BalanceSheet
 
             List<DB_BalanceSheetEntry> balanceSheetTransactions =
                 getAccountBalancesFromTransactions(dbTransactions, dbBalanceSheetEntries);
-            await context.BalanceSheetEntries.AddRangeAsync(balanceSheetTransactions);
+
+            foreach (var newEntry in balanceSheetTransactions)
+            {
+                if(dbBalanceSheetEntries.All(x => 
+                       x.TransactionAccountId != newEntry.TransactionAccountId
+                       && x.FirstOfMonthDate != newEntry.FirstOfMonthDate
+                       && x.AccountBalance != newEntry.AccountBalance))
+                {
+                    await context.BalanceSheetEntries.AddAsync(newEntry);
+                }
+            }
 
             var fixedAssetBalances = await getFixedAssetBalances(context, dbBalanceSheetEntries);
-            await context.BalanceSheetEntries.AddRangeAsync(fixedAssetBalances);
+
+            foreach (var newEntry in fixedAssetBalances)
+            {
+                if (dbBalanceSheetEntries.All(x =>
+                        x.TransactionAccountId != newEntry.TransactionAccountId
+                        && x.FirstOfMonthDate != newEntry.FirstOfMonthDate
+                        && x.AccountBalance != newEntry.AccountBalance)
+                    && balanceSheetTransactions.All(x =>
+                        x.TransactionAccountId != newEntry.TransactionAccountId
+                        && x.FirstOfMonthDate != newEntry.FirstOfMonthDate
+                        && x.AccountBalance != newEntry.AccountBalance))
+                {
+                    await context.BalanceSheetEntries.AddAsync(newEntry);
+                }
+            }
 
             await context.SaveChangesAsync();
 
