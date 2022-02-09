@@ -1875,6 +1875,7 @@
         "framework": ".NETCoreApp,Version=v3.1",
         "dependencies": {
           "AutoMapper": "10.1.1",
+          "ObjectsComparer": "1.4.1",
           "PocketSmith.DataExport": "1.0.0"
         },
         "compile": {
@@ -6370,7 +6371,7 @@
     "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\": {}
   },
   "project": {
-    "version": "2.2.0",
+    "version": "2.2.2",
     "restore": {
       "projectUniqueName": "C:\\Coding\\PocketSmithAttachmentManager\\PocketSmithAttachmentManager\\PocketSmithAttachmentManager.csproj",
       "projectName": "PocketSmithAttachmentManager",

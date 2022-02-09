@@ -56,6 +56,10 @@
             "AutoMapper": {
               "target": "Package",
               "version": "[10.1.1, )"
+            },
+            "ObjectsComparer": {
+              "target": "Package",
+              "version": "[1.4.1, )"
             }
           },
           "imports": [
@@ -171,7 +175,7 @@
       }
     },
     "C:\\Coding\\PocketSmithAttachmentManager\\PocketSmithAttachmentManager\\PocketSmithAttachmentManager.csproj": {
-      "version": "2.2.0",
+      "version": "2.2.2",
       "restore": {
         "projectUniqueName": "C:\\Coding\\PocketSmithAttachmentManager\\PocketSmithAttachmentManager\\PocketSmithAttachmentManager.csproj",
         "projectName": "PocketSmithAttachmentManager",
