@@ -34,7 +34,7 @@ namespace PocketSmithAttachmentManager.Menus
                 {
                     selectedOption = 0;
                 }
-            } while (!Enumerable.Range(1, 4).Contains(selectedOption));
+            } while (!Enumerable.Range(1, 5).Contains(selectedOption));
 
             switch (selectedOption)
             {
