@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PocketSmith.DataExport.Extensions;
@@ -107,8 +108,8 @@ namespace PocketSmith.DataExport
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<DB_Transaction>().Property(t => t.Labels)
-                .HasConversion(l => JsonSerializer.Serialize(l, default), 
-                    l => JsonSerializer.Deserialize<string []>(l, default));
+                .HasConversion(l => JsonSerializer.Serialize(l, (JsonSerializerOptions)null), 
+                    l => JsonSerializer.Deserialize<string []>(l, (JsonSerializerOptions)null));
 
             modelBuilder.Entity<DB_BalanceSheetEntry>()
                 .HasOne(x => x.Transaction)
